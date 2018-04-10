@@ -89,10 +89,10 @@ def mergePascalDataset(littlePath=None, finalPath=None):
     # recode log
     record_log_file = os.path.join(finalPath,'update_log.log')
     with open(record_log_file,'a') as f:
-        f.write("update info : %s add dataset \n%s\n" % (getTimeFlag(), littlePath.split('/')[-1]))
+        f.write("update info : %s add dataset ::: %s\n" % (getTimeFlag(), littlePath.split('/')[-1]))
         littlePath_readme = os.path.join(littlePath, 'readme.txt')
         littlePath_readme_dict = json.load(open(littlePath_readme,'r'))
-        f.write(json.dumps(littlePath_readme_dict))
+        f.write(json.dumps(littlePath_readme_dict)+'\n')
     little_readme_file = os.path.join(littlePath, 'readme.txt')
     little_readme_file_dict = json.load(open(little_readme_file, 'r'))
     final_readme_file = os.path.join(finalPath, 'readme.txt')
