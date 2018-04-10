@@ -195,7 +195,7 @@ def createXmlFileByLabelXJsonList(labelxJsonLine=None, basePath=None):
         cmdStr = "mv %s %s" % (imageLocalImagePath, errorImage_path_name)
         res = os.system(cmdStr)
         if res != 0:
-            print("run command error %d" % (cmdStr))
+            print("run command error %s" % (cmdStr))
             exit()
         return "error"
     for i_bbox in value:
