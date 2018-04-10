@@ -189,7 +189,7 @@ def createXmlFileByLabelXJsonList(labelxJsonLine=None, basePath=None):
     if res == None:
         # because the image can't read ,so delete the image
         errorImageDir = os.path.join(basePath,'errorImage')
-        if not os.path.join(errorImageDir):
+        if not os.path.exists(errorImageDir):
             os.makedirs(errorImageDir)
         errorImage_path_name = os.path.join(errorImageDir, imageLocalImagePath.split('/')[-1])
         cmdStr = "mv %s %s" % (imageLocalImagePath, errorImage_path_name)
