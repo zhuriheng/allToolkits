@@ -118,7 +118,7 @@ def createObject(objectDict=None):
     _xmax.text = convertToInt_str(objectDict['bbox'][2][0])
     _ymax = etree.SubElement(_bndbox, 'ymax')
     _ymax.text = convertToInt_str(objectDict['bbox'][2][1])
-    
+    return _object
 
 def adjustBboxPosition(root=None):
     root = root  # annotation
