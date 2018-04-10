@@ -2,6 +2,7 @@
 import os
 import sys
 import json
+import time
 from gen_imagesets import gen_imagesets
 import image_helper
 import xml_helper
@@ -35,11 +36,86 @@ def covertLabelxMulFilsToVoc_Fun(labelxPath=None,vocResultPath=None):
     pass
 
 
-def mergePascalDataset(littlePath=None, finalPath=None):
+def getFileCountInDir(dirPath=None):
+    file_list = [i for i in os.listdir(dirPath) if i[0] != '.' and os.path.isfile(os.path.join(dirPath, i))]
+    return [len(file_list), sorted(file_list)]
 
-    # merge image
-    littlePath_image = ""
-    # merge xml
+
+def mergePascalDataset(littlePath=None, finalPath=None):
+    if not os.path.exists(finalPath):
+        os.makedirs(finalPath)
+    if not os.path.exists(os.path.join(finalPath, 'JPEGImages')):
+        os.makedirs(os.path.join(finalPath, 'JPEGImages'))
+    if not os.path.exists(os.path.join(finalPath, 'Annotations')):
+        os.makedirs(os.path.join(finalPath, 'Annotations'))
+    if not os.path.exists(os.path.join(finalPath, 'ImageSets', 'Main')):
+        os.makedirs(os.path.join(finalPath, 'ImageSets', 'Main'))
+    # merge image and merge xml
+    littlePath_image = os.path.join(littlePath, 'JPEGImages')
+    finalPath_image = os.path.join(finalPath, 'JPEGImages')
+    littlePath_image_count = getFileCountInDir(littlePath_image)[0]
+    littlePath_xml = os.path.join(littlePath, 'Annotations')
+    finalPath_xml = os.path.join(finalPath, 'Annotations')
+    littlePath_xml_count = getFileCountInDir(littlePath_xml)[0]
+    if littlePath_image_count != littlePath_xml_count:
+        print("ERROR : %s JPEGImages-nums unequals Annotations-nums" %(littlePath))
+        return "error"
+    cmdStr_cp_image = "cp %s/* %s" % (littlePath_image, finalPath_image)
+    cmdStr_cp_xml = "cp %s/* %s" % (littlePath_xml, finalPath_xml)
+    res = os.system(cmdStr_cp_image)
+    if res != 0:
+        print("ERROR : %s" % (cmdStr_cp_image))
+        return "error"
+    else:
+        print("SUCCESS : %s" % (cmdStr_cp_image))
+    res = os.system(cmdStr_cp_xml)
+    if res != 0:
+        print("ERROR : %s" % (cmdStr_cp_xml))
+        return "error"
+    else:
+        print("SUCCESS : %s" % (cmdStr_cp_xml))
     # merge txt file
+    littlePath_main = os.path.join(littlePath, 'ImageSets', 'Main')
+    finalPath_main = os.path.join(finalPath, 'ImageSets', 'Main')
+    textFile_list = getFileCountInDir(dirPath=littlePath_main)[1]
+    for i in textFile_list:
+        little_file = os.path.join(littlePath_main,i)
+        final_file = os.path.join(finalPath_main, i)
+        cmdStr = "cat %s >> %s" % (little_file, final_file)
+        res = os.system(cmdStr)
+        if res != 0:
+            print("ERROR : %s" % (cmdStr))
+            return 'error'
     # recode log
+    record_log_file = os.path.join(finalPath,'update_log.log')
+    with open(record_log_file,'a') as f:
+        f.write("update info : %s \n add %s" % (getTimeFlag(), littlePath))
+        littlePath_readme = os.path.join(littlePath, 'readme.txt')
+        littlePath_readme_dict = json.load(open(littlePath_readme,'r'))
+        f.write(json.dumps(littlePath_readme_dict))
+    little_readme_file = os.path.join(littlePath, 'readme.txt')
+    little_readme_file_dict = json.load(open(little_readme_file, 'r'))
+    final_readme_file = os.path.join(finalPath, 'readme.txt')
+    if not os.path.exists(final_readme_file):
+        cmdStr = "cp %s %s" % (little_readme_file, final_readme_file)
+        res = os.system(cmdStr)
+        if res != 0:
+            return 'error'
+    else:
+        final_readme_file_dict = json.load(open(final_readme_file, 'r'))
+        for key in final_readme_file_dict.keys():
+            if key == "data":
+                final_readme_file_dict[key] = getTimeFlag()
+            if key == "dataInfo":
+                for i in little_readme_file_dict[key]:
+                    final_readme_file_dict[key].append(i)
+            if key == "author":
+                final_readme_file_dict[key] = 'Ben'
+            elif key in ['total_num', 'trainval_num', 'test_num']:
+                final_readme_file_dict[key] = final_readme_file_dict[key] + \
+                    little_readme_file_dict[key]
     pass
+
+
+def getTimeFlag():
+    return time.strftime("%Y-%m-%d-%H", time.localtime())

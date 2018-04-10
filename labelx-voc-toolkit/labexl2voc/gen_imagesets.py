@@ -5,9 +5,8 @@ import argparse
 import os
 from os import listdir
 from os.path import join, isfile
-
-
-__author__ = 'peic'
+import time
+import json
 
 '''
 设置trainval和test数据集包含的图片
@@ -60,3 +59,16 @@ def gen_imagesets(vocpath):
     with open(os.path.join(_MAin_PATH, 'trainval.txt'), 'w+') as f:
         f.write(r)
         f.write('\n')
+    # write readme in vocpath
+    readme_dict = dict()
+    readme_dict['date'] = getTimeFlag()
+    readme_dict['dataInfo'] = [vocpath.split('/')[-1]]
+    readme_dict['author'] = "Ben"
+    readme_dict['total_num'] = xml_numbers
+    readme_dict['trainval_num'] = len(trainval_list)
+    readme_dict['test_num'] = len(test_list)
+    readme_file = os.path.join(vocpath,'readme.txt')
+    with open(readme_file,'w') as f:
+        json.dump(readme_dict, f)
+def getTimeFlag():
+    return time.strftime("%Y-%m-%d-%H", time.localtime())

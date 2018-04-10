@@ -70,7 +70,10 @@ def main():
         if vocpath == None or finalVocpath == None:
             print("vocpath and finalVocpath is required")
             return -1
-        labelx2xml_helper.mergePascalDataset(littlePath=None,finalPath=None)
+        res = labelx2xml_helper.mergePascalDataset(
+            littlePath=vocpath, finalPath=finalVocpath)
+        if res == 'error':
+            return 1
         pass
     pass
 
