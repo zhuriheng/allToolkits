@@ -3,6 +3,8 @@ import os
 import sys
 import json
 import hashlib
+import threading
+import Queue
 
 def downloadImage_By_urllist(labelxjson=None, tempSaveDir=None, vocpath=None):
     imageSaveDir = os.path.join(vocpath, 'JPEGImages')
@@ -51,6 +53,64 @@ def wgetImageFromUrl(urlFile=None, saveBasePath=None):
                 w_e_f.write('\n')
                 pass
     pass
+
+
+def wgetImageFromUrl_MulThread(urlFile=None, saveBasePath=None):
+    # globale vars initialization
+    GLOBAL_LOCK = threading.Lock()
+    ERROR_NUMBER = 0
+    FILE_NAME = str()
+    
+    pass
+
+
+
+GLOBAL_LOCK = threading.Lock()
+ERROR_NUMBER = 0
+FILE_NAME = str()
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 # not used ********************
 

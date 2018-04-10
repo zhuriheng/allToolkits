@@ -5,7 +5,7 @@ import json
 from lxml import etree
 # from PIL import Image
 import cv2
-
+import labelxJson_helper
 # 定义一个常量字典
 PASCAL_VOC={
     'folder': 'VOC2007',
@@ -169,7 +169,7 @@ def createXmlFileByLabelXJsonList(labelxJsonLine=None, basePath=None):
     """
         这个函数的作用是：根据一个图片的labelx 标注信息，生成 pascal voc xml 文件
     """
-    key, value = parse_labelXJson_helper.get_jsonList_line_labelInfo(
+    key, value = labelxJson_helper.get_jsonList_line_labelInfo(
         line=labelxJsonLine)
     if value == None:
         print("WARNING: %s don't contains labeled info" % (labelxJsonLine))
