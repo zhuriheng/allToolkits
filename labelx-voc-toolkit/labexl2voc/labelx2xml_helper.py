@@ -114,7 +114,7 @@ def mergePascalDataset(littlePath=None, finalPath=None):
             elif key in ['total_num', 'trainval_num', 'test_num']:
                 final_readme_file_dict[key] = final_readme_file_dict[key] + \
                     little_readme_file_dict[key]
-        with open(final_readme_file,'r') as f:
+        with open(final_readme_file,'w') as f:
             json.dump(final_readme_file_dict, f, indent=4)
     pass
 
