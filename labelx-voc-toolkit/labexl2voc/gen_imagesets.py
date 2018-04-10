@@ -69,6 +69,6 @@ def gen_imagesets(vocpath):
     readme_dict['test_num'] = len(test_list)
     readme_file = os.path.join(vocpath,'readme.txt')
     with open(readme_file,'w') as f:
-        json.dump(readme_dict, f)
+        json.dump(readme_dict, f, indent=4)
 def getTimeFlag():
     return time.strftime("%Y-%m-%d-%H", time.localtime())
