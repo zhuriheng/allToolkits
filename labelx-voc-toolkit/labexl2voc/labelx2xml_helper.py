@@ -61,10 +61,10 @@ def mergePascalDataset(littlePath=None, finalPath=None):
         print("ERROR : %s JPEGImages-nums unequals Annotations-nums" %(littlePath))
         return "error"
     # cmdStr_cp_image = "cp %s/* %s" % (littlePath_image, finalPath_image)
-    cmdStr_cp_image = "for i in `ls %s`;do cp \"%s/\"$i %s" % (
+    cmdStr_cp_image = "for i in `ls %s`;do cp \"%s/\"$i %s;done;" % (
         littlePath_image, littlePath_image, finalPath_image)
     # cmdStr_cp_xml = "cp %s/* %s" % (littlePath_xml, finalPath_xml)
-    cmdStr_cp_xml = "for i in `ls %s`;do cp \"%s/\"$i %s" % (
+    cmdStr_cp_xml = "for i in `ls %s`;do cp \"%s/\"$i %s;done;" % (
         littlePath_xml, littlePath_xml, finalPath_xml)
     res = os.system(cmdStr_cp_image)
     if res != 0:
