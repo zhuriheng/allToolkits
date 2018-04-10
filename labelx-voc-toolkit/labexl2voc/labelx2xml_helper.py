@@ -34,10 +34,12 @@ def covertLabelxMulFilsToVoc_Fun(labelxPath=None,vocResultPath=None):
         json_file_absolutePath=finalOneFile, tempSaveDir=tempSaveDir, vocpath=vocpath)
     pass
 
-def main():
-    # md5 check and remove same imacge
-    # md5_remove_model_fun(basePath=args.vocpath)
-    pass
 
-if __name__ == '__main__':
-    main()
+def mergePascalDataset(littlePath=None, finalPath=None):
+
+    # merge image
+    littlePath_image = 
+    # merge xml
+    # merge txt file
+    # recode log
+    pass

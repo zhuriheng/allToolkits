@@ -42,7 +42,6 @@ def pascalVocXmlTemplate():
 def appendFileNameText(root=None, fileName=None):
     rootElememt = root
     rootElememt.find('filename').text = fileName
-    return rootElememt
 def appendSourceText(root=None):
     rootElememt = root
     source_Element_1 = rootElememt.find('source')
@@ -54,7 +53,6 @@ def appendSourceText(root=None):
     image.text = PASCAL_VOC['source']['image'] 
     flickrid = etree.SubElement(source_Element_1, 'flickrid')
     flickrid.text = PASCAL_VOC['source']['flickrid']
-    return rootElememt
 def appendOwnerText(root=None):
     rootElememt = root
     owner_Element_1 = rootElememt.find('owner')
@@ -62,11 +60,17 @@ def appendOwnerText(root=None):
     flickrid.text = PASCAL_VOC['owner']['flickrid']
     name = etree.SubElement(owner_Element_1, 'name')
     name.text = PASCAL_VOC['owner']['name']
-    return rootElememt
 def appendSizeText(root=None,imagePath=None):
     # 获取图片信息
     # img = Image.open(imagePath)
-    img = cv2.imread(imagePath)
+    img = None
+    try:
+        img = cv2.imread(imagePath)
+    except :
+        img = None
+    if img == None:
+        print("ERROR INFO : %s can't read"%(imagePath))
+        return None
     img_height, img_width,img_depth = img.shape
     # img_width, img_height = img.size
     rootElememt = root
@@ -79,7 +83,8 @@ def appendSizeText(root=None,imagePath=None):
     depth.text = str(img_depth)
     if img_depth != 3:
         print("ERROR info : %s channel is %d" % (imagePath, img_depth))
-    return rootElememt
+        return None
+    return 0
 def appendObject(root=None,objectDict=None):
     """
         objectDict:
@@ -92,7 +97,6 @@ def appendObject(root=None,objectDict=None):
     rootElememt = root
     _object = createObject(objectDict=objectDict)
     root.append(_object)
-    return rootElememt
 def createObject(objectDict=None):
     _object = etree.Element('object')
     _name = etree.SubElement(_object, 'name')
@@ -112,7 +116,6 @@ def createObject(objectDict=None):
     _xmax.text = convertToInt_str(objectDict['bbox'][2][0])
     _ymax = etree.SubElement(_bndbox, 'ymax')
     _ymax.text = convertToInt_str(objectDict['bbox'][2][1])
-    return _object
     
 
 def adjustBboxPosition(root=None):
@@ -180,7 +183,9 @@ def createXmlFileByLabelXJsonList(labelxJsonLine=None, basePath=None):
     appendSourceText(root=root)
     appendOwnerText(root=root)
     imageLocalImagePath = os.path.join(basePath,'JPEGImages', imageName)
-    appendSizeText(root=root, imagePath=imageLocalImagePath)
+    res = appendSizeText(root=root, imagePath=imageLocalImagePath)
+    if res == None:
+        return "error"
     for i_bbox in value:
         appendObject(root=root, objectDict=i_bbox)
     # adjust bbox position
@@ -191,7 +196,7 @@ def createXmlFileByLabelXJsonList(labelxJsonLine=None, basePath=None):
     xmlFileName = imageName.split('.')[0]+'.xml'
     saveXmlFilePath = os.path.join(xmlBasePath, xmlFileName)
     writeXmlFile(root = root, xmlFileName = saveXmlFilePath)
-    pass
+    return "success"
 def writeXmlFile(root=None, xmlFileName=None):
     tree = etree.ElementTree(root)
     tree.write(xmlFileName, pretty_print=True)
@@ -202,6 +207,8 @@ def convertLabelxJsonListToXmlFile(jsonlistFile=None,datasetBasePath=None):
             line = line.strip()
             if len(line) <= 0:
                 continue
-            createXmlFileByLabelXJsonList(
+            res = createXmlFileByLabelXJsonList(
                 labelxJsonLine=line, basePath=datasetBasePath)
+            if res == "error":
+                print("ERROR")
 

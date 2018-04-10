@@ -12,6 +12,10 @@ helpInfoStr = \
         1 : 将指定目录下的所有打标过的json 文件转换成 pascal xml 格式数据
             --labelxBasePath ,required
             --vocpath , optional
+        2 : 将一个 pascal voc 数据集 添加到 另外一个数据集中
+            --vocpath ,required 
+            --finalVocpath , required
+            将 vocpath 指向的数据集 添加到 finalVocpath 这个数据集中
 """
 
 def parse_args():
@@ -29,10 +33,14 @@ def parse_args():
                         default=None,
                         help='vocpath for data generate',
                         type=str)
+    parser.add_argument('--finalVocpath',
+                        dest='finalVocpath',
+                        default=None,
+                        help='vocpath for data generate',
+                        type=str)
     parser.add_argument('--labelxBasePath',
                         dest='labelxBasePath',
                         default=None,
-                        required=True,
                         help='labelx annotation file base path',
                         type=str)
 
@@ -48,6 +56,7 @@ def main():
         labelxBasePath = args.labelxBasePath
         if labelxBasePath == None:
             print("labelxBasePath required")
+            return -1
         labelxBasePath = os.path.abspath(labelxBasePath)
         vocpath = args.vocpath
         if vocpath == None:
@@ -55,8 +64,20 @@ def main():
         labelx2xml_helper.covertLabelxMulFilsToVoc_Fun(
             labelxPath=labelxBasePath, vocResultPath=vocpath)
         pass
+    elif args.actionFlag == 2:
+        vocpath = args.vocpath
+        finalVocpath = args.finalVocpath
+        if vocpath == None or finalVocpath == None:
+            print("vocpath and finalVocpath is required")
+            return -1
+        labelx2xml_helper.mergePascalDataset(littlePath=None,finalPath=None)
+        pass
     pass
 
 if __name__ == '__main__':
-    main()
+    res = main()
+    if res == -1:
+        print(helpInfoStr)
+    else:
+        print("RUN SUCCESS")
 
