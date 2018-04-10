@@ -6,6 +6,7 @@ import hashlib
 import threading
 import Queue
 import time
+import numpy as np
 
 def downloadImage_By_urllist(labelxjson=None, tempSaveDir=None, vocpath=None):
     imageSaveDir = os.path.join(vocpath, 'JPEGImages')
@@ -161,6 +162,29 @@ class cons_worker(threading.Thread):
         GLOBAL_LOCK.release()
 
 
+def readImage_fun(isUrlFlag=None, imagePath=None):
+    """
+        isUrlFlag == True , then read image from url
+        isUrlFlag == False , then read image from local path
+    """
+    im = None
+    if isUrlFlag == True:
+        try:
+            data = urllib.urlopen(imagePath.strip()).read()
+            nparr = np.fromstring(data, np.uint8)
+            if nparr.shape[0] < 1:
+                im = None
+        except:
+            im = None
+        else:
+            im = cv2.imdecode(nparr, 1)
+        finally:
+            return im
+    else:
+        im = cv2.imread(imagePath, cv2.IMREAD_COLOR)
+    if np.shape(im) == ():
+        return None
+    return im
 
 
 

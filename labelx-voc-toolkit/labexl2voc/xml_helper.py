@@ -6,6 +6,8 @@ from lxml import etree
 # from PIL import Image
 import cv2
 import labelxJson_helper
+import image_helper
+import numpy as np
 # 定义一个常量字典
 PASCAL_VOC={
     'folder': 'VOC2007',
@@ -68,7 +70,7 @@ def appendSizeText(root=None,imagePath=None):
         img = cv2.imread(imagePath)
     except :
         img = None
-    if img == None:
+    if np.shape(img) == ():
         print("ERROR INFO : %s can't read"%(imagePath))
         return None
     img_height, img_width,img_depth = img.shape
@@ -185,6 +187,16 @@ def createXmlFileByLabelXJsonList(labelxJsonLine=None, basePath=None):
     imageLocalImagePath = os.path.join(basePath,'JPEGImages', imageName)
     res = appendSizeText(root=root, imagePath=imageLocalImagePath)
     if res == None:
+        # because the image can't read ,so delete the image
+        errorImageDir = os.path.join(basePath,'errorImage')
+        if not os.path.join(errorImageDir):
+            os.makedirs(errorImageDir)
+        errorImage_path_name = os.path.join(errorImageDir, imageLocalImagePath.split('/'[-1]))
+        cmdStr = "mv %s %s" % (imageLocalImagePath, errorImage_path_name)
+        res = os.system(cmdStr)
+        if res != 0:
+            print("run command error %d" % (cmdStr))
+            exit()
         return "error"
     for i_bbox in value:
         appendObject(root=root, objectDict=i_bbox)

@@ -38,7 +38,7 @@ def covertLabelxMulFilsToVoc_Fun(labelxPath=None,vocResultPath=None):
 def mergePascalDataset(littlePath=None, finalPath=None):
 
     # merge image
-    littlePath_image = 
+    littlePath_image = ""
     # merge xml
     # merge txt file
     # recode log
