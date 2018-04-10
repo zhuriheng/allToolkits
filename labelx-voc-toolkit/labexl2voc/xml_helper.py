@@ -5,7 +5,6 @@ import json
 from lxml import etree
 # from PIL import Image
 import cv2
-import parse_labelXJson_helper
 
 # 定义一个常量字典
 PASCAL_VOC={

@@ -27,15 +27,12 @@ def covertLabelxMulFilsToVoc_Fun(labelxPath=None,vocResultPath=None):
     if not os.path.exists(vocpath):
         os.makedirs(vocpath)
     # 1 : mergeAllJsonListFileToOneFile 将多个jsonlist 合并成一个，并按照url 去重
-    labelxJson_helper.mergeAllJsonListFileToOneFile(
+    finalOneFile = labelxJson_helper.mergeAllJsonListFileToOneFile(
         inputDir=inputDir, tempSaveDir=tempSaveDir)
     # 2 : 根据整合生成的一个总文件，开始下载图片，生成 xml 文件
     process_labelx_jsonFile_Fun(
-        json_file_absolutePath=None, tempSaveDir=None, vocpath=None)
+        json_file_absolutePath=finalOneFile, tempSaveDir=tempSaveDir, vocpath=vocpath)
     pass
-
-
-
 
 def main():
     # md5 check and remove same imacge
@@ -44,13 +41,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-
-"""
-nohup python -u /workspace/data/BK/terror-add-labelxDataset-toTerrorDataset/src/process_labelX.py \
---labelxBasePath \
-/workspace/data/BK/terror-add-labelxDataset-toTerrorDataset/data/labelXDataSet/labelx-terror-detect-v0.9+_labeled \
---vocpath \
-/workspace/data/BK/terror-add-labelxDataset-toTerrorDataset/data/labelXDataSet_output/labelx-terror-detect-v0.9+_labeled_output \
-> /workspace/data/BK/terror-add-labelxDataset-toTerrorDataset/src/0209.log 2>&1 &
-
-"""

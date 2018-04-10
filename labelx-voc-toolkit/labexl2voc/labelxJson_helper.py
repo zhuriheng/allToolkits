@@ -112,5 +112,4 @@ def mergeAllJsonListFileToOneFile(inputDir=None, tempSaveDir=None):
         for key in anno_json_info_dict:
             f.write(anno_json_info_dict[key])
             f.write('\n')
-        pass
-    pass
+    return all_json_file_name

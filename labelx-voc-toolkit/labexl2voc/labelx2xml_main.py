@@ -14,7 +14,6 @@ helpInfoStr = \
             --vocpath , optional
 """
 
-
 def parse_args():
     parser = argparse.ArgumentParser(
         description='labelx convert to pascal voc toolkit'
@@ -40,7 +39,6 @@ def parse_args():
     args = parser.parse_args()
     return args
 
-
 args = parse_args()
 
 def main():
@@ -59,9 +57,6 @@ def main():
         pass
     pass
 
-
 if __name__ == '__main__':
     main()
 
-"""
-"""
