@@ -13,7 +13,7 @@ import json
 '''
 
 
-def gen_imagesets(vocpath):
+def gen_imagesets(vocpath=None):
     # ImageSets文件夹
     _IMAGE_SETS_PATH = join(vocpath, 'ImageSets')
     _MAin_PATH = join(vocpath, 'ImageSets/Main')

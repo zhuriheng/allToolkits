@@ -16,6 +16,8 @@ helpInfoStr = \
             --vocpath ,required 
             --finalVocpath , required
             将 vocpath 指向的数据集 添加到 finalVocpath 这个数据集中
+        3 : 根据已经有的图片和xmL文件生成ImageSets/Main，readme.txt
+            --vocpath ,required 
 """
 
 def parse_args():
@@ -74,6 +76,13 @@ def main():
             littlePath=vocpath, finalPath=finalVocpath)
         if res == 'error':
             return 1
+        pass
+    elif args.actionFlag == 3:
+        vocpath = args.vocpath
+        if vocpath == None:
+            print("vocpath is required")
+            return -1
+        labelx2xml_helper.gen_imageset_Fun(vocPath=vocpath)
         pass
     pass
 

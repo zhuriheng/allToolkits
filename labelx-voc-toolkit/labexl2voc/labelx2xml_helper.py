@@ -3,7 +3,7 @@ import os
 import sys
 import json
 import time
-from gen_imagesets import gen_imagesets
+import  gen_imagesets
 import image_helper
 import xml_helper
 import labelxJson_helper
@@ -16,7 +16,7 @@ def process_labelx_jsonFile_Fun(json_file_absolutePath=None, tempSaveDir=None, v
     xml_helper.convertLabelxJsonListToXmlFile(
         jsonlistFile=json_file_absolutePath, datasetBasePath=vocpath)
     # 这个是生成 pascal voc 格式的数据集 xml  jpg txt
-    gen_imagesets(vocpath=vocpath)
+    gen_imagesets.gen_imagesets(vocpath=vocpath)
     pass
 
 def covertLabelxMulFilsToVoc_Fun(labelxPath=None,vocResultPath=None):
@@ -108,7 +108,7 @@ def mergePascalDataset(littlePath=None, finalPath=None):
     else:
         final_readme_file_dict = json.load(open(final_readme_file, 'r'))
         for key in final_readme_file_dict.keys():
-            if key == "data":
+            if key == "date":
                 final_readme_file_dict[key] = getTimeFlag()
             if key == "dataInfo":
                 for i in little_readme_file_dict[key]:
@@ -125,3 +125,7 @@ def mergePascalDataset(littlePath=None, finalPath=None):
 
 def getTimeFlag():
     return time.strftime("%Y-%m-%d-%H", time.localtime())
+
+def gen_imageset_Fun(vocPath=None):
+    gen_imagesets.gen_imagesets(vocpath=vocPath)
+    pass
