@@ -52,7 +52,7 @@ def check_xml_file(xml_file=None):
             print("*"*100)
             print(xml_file)
             print(i_bbox)
-            print(w_h_d_list
+            print(w_h_d_list)
     pass
 
 def main():
