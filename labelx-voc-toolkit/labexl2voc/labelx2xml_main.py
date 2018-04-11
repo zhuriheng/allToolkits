@@ -18,6 +18,8 @@ helpInfoStr = \
             将 vocpath 指向的数据集 添加到 finalVocpath 这个数据集中
         3 : 根据已经有的图片和xmL文件生成ImageSets/Main，readme.txt
             --vocpath ,required 
+        4 : 统计vopath bbox 的类别信息
+            --vocpath ,required 
 """
 
 def parse_args():
@@ -83,6 +85,13 @@ def main():
             print("vocpath is required")
             return -1
         labelx2xml_helper.gen_imageset_Fun(vocPath=vocpath)
+        pass
+    elif args.actionFlag == 4:
+        vocpath = args.vocpath
+        if vocpath == None:
+            print("vocpath is required")
+            return -1
+        labelx2xml_helper.statisticBboxInfo_Fun(vocPath=vocpath)
         pass
     pass
 

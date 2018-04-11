@@ -129,3 +129,7 @@ def getTimeFlag():
 def gen_imageset_Fun(vocPath=None):
     gen_imagesets.gen_imagesets(vocpath=vocPath)
     pass
+
+
+def statisticBboxInfo_Fun(vocPath=None):
+    pass

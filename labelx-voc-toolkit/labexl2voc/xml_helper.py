@@ -224,3 +224,32 @@ def convertLabelxJsonListToXmlFile(jsonlistFile=None,datasetBasePath=None):
             if res == "error":
                 print("ERROR")
 
+
+def parseXmlFile_countBboxClassNum(xmlFile=None):
+    tree = etree.parse(xmlFile)
+    rooTElement = tree.getroot()
+    object_list = []
+    for child in rooTElement:
+        if child.tag == "object":
+            one_object_dict = {}
+            one_object_dict['name'] = child.xpath('name')[0].text
+            one_object_dict['xmin'] = child.xpath(
+                'bndbox')[0].xpath('xmin')[0].text
+            one_object_dict['ymin'] = child.xpath(
+                'bndbox')[0].xpath('ymin')[0].text
+            one_object_dict['xmax'] = child.xpath(
+                'bndbox')[0].xpath('xmax')[0].text
+            one_object_dict['ymax'] = child.xpath(
+                'bndbox')[0].xpath('ymax')[0].text
+            object_list.append(one_object_dict)
+    return object_list
+
+
+def statisticBboxInfo_inXmlFiles(vocpath=None):
+    xmlBasePath = os.path.join(vocpath, 'Annotations')
+    xmlfile_list = [os.path.join(xmlBasePath,i) for i in os.listdir(
+        xmlBasePath) if i[0] != '.' and i.endswith('xml')]
+    bbox_label_count_dict = dict()
+    for xml_file in xmlfile_list:
+        object_list = parseXmlFile_countBboxClassNum(xmlFile=xml_file)
+        pass
