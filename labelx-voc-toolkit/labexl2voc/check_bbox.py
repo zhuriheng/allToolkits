@@ -53,6 +53,11 @@ def check_xml_file(xml_file=None):
             print(xml_file)
             print(i_bbox)
             print(w_h_d_list)
+        elif (xmax - xmin == 1) or (ymax - ymin == 1):
+            print("-"*100)
+            print(xml_file)
+            print(i_bbox)
+            print(w_h_d_list)
     pass
 
 def main():
