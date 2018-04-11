@@ -42,7 +42,7 @@ def check_xml_file(xml_file=None):
         ymin = i_bbox[1][1]
         xmax = i_bbox[1][2]
         ymax = i_bbox[1][3]
-        if xmin >xmax or ymin > ymax or xmin <0 or ymin < 0 or xmax>w or ymax>h or d != 3:
+        if xmin >= xmax or ymin >= ymax or xmin =<0 or ymin =< 0 or xmax >= w or ymax >= h or d != 3:
             print(xml_file)
             print(i_bbox)
             print(w_h_d_list)
