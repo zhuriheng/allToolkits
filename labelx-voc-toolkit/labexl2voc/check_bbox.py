@@ -22,12 +22,14 @@ def get_object_list(xmlFile=None):
             xmax = child.xpath('bndbox')[0].xpath('xmax')[0].text
             ymax = child.xpath('bndbox')[0].xpath('ymax')[0].text
             bbox_position = [float(xmin), float(ymin), float(xmax), float(ymax)]
+            bbox_position = [int(i) for i in bbox_position]
             object_list.append([bbox_label, bbox_position])
         elif child.tag == "size":
             width = child.xpath('width')[0].text
             height = child.xpath('height')[0].text
             depth = child.xpath('depth')[0].text
             w_h_d_list = [float(width), float(height), float(depth)]
+            w_h_d_list = [int(i) for i in w_h_d_list]
     return (w_h_d_list,object_list)
 
 
@@ -46,6 +48,11 @@ def check_xml_file(xml_file=None):
             print(xml_file)
             print(i_bbox)
             print(w_h_d_list)
+        elif ((xmax - xmin) * (ymax - ymin)) < 2:
+            print("*"*100)
+            print(xml_file)
+            print(i_bbox)
+            print(w_h_d_list
     pass
 
 def main():
