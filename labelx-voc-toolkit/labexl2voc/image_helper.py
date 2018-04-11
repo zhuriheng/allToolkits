@@ -150,7 +150,7 @@ class cons_worker(threading.Thread):
                     # wget error
                     err_num += 1
                     GLOBAL_LOCK.acquire()
-                    self.logErOp.write(url)
+                    self.logErOp.write(url+'\n')
                     self.logErOp.flush()
                     GLOBAL_LOCK.release()
                     pass
