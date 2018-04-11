@@ -22,7 +22,7 @@ def get_old_not_terror_object_list(xmlFile=None):
     return object_list    
 def addFun(odlxml=None,newxml=None):
     root = etree.parse(newxml).getroot()
-    not_terror_object_list = get_old_not_terror_object_list(xmlFile=None)
+    not_terror_object_list = get_old_not_terror_object_list(xmlFile=odlxml)
     for new_object in not_terror_object_list:
         root.append(new_object)
     writeXmlFile(root=root, xmlFileName=newxml)
