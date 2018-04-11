@@ -50,7 +50,8 @@ def check_xml_file(xml_file=None):
 
 def main():
     xmlFileNewPath = '/workspace/data/BK/terror-dataSet-Dir/TERROR-DETECT-V1.0/Annotations'
-    xml_file_list = [i for i in os.listdir(xmlFileNewPath) if i[0]!='.']
+    xml_file_list = [os.path.join(xmlFileNewPath, i)
+                     for i in os.listdir(xmlFileNewPath) if i[0] != '.']
     for xml_file in xml_file_list:
         check_xml_file(xml_file=xml_file)
 
