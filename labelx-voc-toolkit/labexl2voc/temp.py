@@ -45,7 +45,7 @@ def main():
                 return
             newXml = os.path.join(xmlFileNewPath, i)
             if not os.path.isfile(newXml):
-                print("NEW  : %s don't exists" % (oldXml))
+                print("NEW  : %s don't exists" % (newXml))
                 continue
             addFun(odlxml=oldXml, newxml=newXml)
             
