@@ -96,7 +96,6 @@ def appendObject(root=None,objectDict=None):
             "ground_truth": true
         }
     """
-    rootElememt = root
     _object = createObject(objectDict=objectDict)
     root.append(_object)
 def createObject(objectDict=None):
@@ -133,9 +132,9 @@ def adjustBboxPosition(root=None):
         xmax = int(float(bndbox.find('xmax').text))
         ymax = int(float(bndbox.find('ymax').text))
         if xmin <= 0:
-            xmin = 0
+            xmin = 1
         if ymin <= 0:
-            ymin = 0
+            ymin = 1
         if xmax >= width_int:
             xmax = width_int - 1
         if ymax >= height_int:
@@ -148,10 +147,10 @@ def adjustBboxPosition(root=None):
             # remove the object
             root.remove(object)
         else:
-            bndbox.find('xmin').text = str(xmin)
-            bndbox.find('ymin').text = str(ymin)
-            bndbox.find('xmax').text = str(xmax)
-            bndbox.find('ymax').text = str(ymax)
+            bndbox.find('xmin').text = convertToInt_str(xmin)
+            bndbox.find('ymin').text = convertToInt_str(ymin)
+            bndbox.find('xmax').text = convertToInt_str(xmax)
+            bndbox.find('ymax').text = convertToInt_str(ymax)
 def convertToInt_str(input):
     output = None
     if type(input) == str:
