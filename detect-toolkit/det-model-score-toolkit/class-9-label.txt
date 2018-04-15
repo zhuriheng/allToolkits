@@ -1,0 +1,10 @@
+{"class": "islamic flag","index":1,"flag":1}
+{"class": "isis flag", "index": 2,"flag":1}
+{"class": "tibetan flag", "index": 3,"flag":1}
+{"class": "knives_true", "index": 4,"flag":1}
+{"class": "guns_true", "index": 5,"flag":1}
+{"class": "knives_false", "index": 6,"flag":1}
+{"class": "knives_kitchen", "index": 7,"flag":1}
+{"class": "guns_anime", "index": 8,"flag":1}
+{"class": "guns_tools", "index": 9,"flag":1}
+{"class": "not terror", "index": 10,"flag":0}
