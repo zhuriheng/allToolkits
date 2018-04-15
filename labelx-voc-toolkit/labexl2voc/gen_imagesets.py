@@ -7,7 +7,7 @@ from os import listdir
 from os.path import join, isfile
 import time
 import json
-
+import xml_helper
 '''
 设置trainval和test数据集包含的图片
 '''
@@ -72,3 +72,40 @@ def gen_imagesets(vocpath=None):
         json.dump(readme_dict, f, indent=4)
 def getTimeFlag():
     return time.strftime("%Y-%m-%d-%H", time.localtime())
+
+
+
+
+def statisticBboxInfo_Fun(imagelistFile=None,xmlFileBasePath=None):
+    """
+      imagelistFile is file , per line is a image(xml) file 
+        not include jpg or xml 
+    """
+    line_count = 0
+    label_count_dict=dict()
+    with open(imagelistFile,'r') as f:
+        for line in f.readlines():
+            line = line.strip()
+            if not line :
+                continue
+            line_count += 1
+            object_list = xml_helper.parseXmlFile_countBboxClassNum(xmlFile=line)
+            for i_object in object_list:
+                label = i_object['name']
+                if label in label_count_dict:
+                    label_count_dict[label] = label_count_dict[label] + 1
+                else:
+                    label_count_dict[label] = 1
+    print("*"*100)
+    print("image count in %s is : %d" % (imagelistFile, line_count))
+    for key in sorted(label_count_dict.keys()):
+        print("%s : %d" % (key, label_count_dict[key]))
+    pass
+
+def main():
+    imagelistFile = "/workspace/data/BK/terror-dataSet-Dir/TERROR-DETECT-V1.0/ImageSets/Main/trainval.txt"
+    xmlFileBasePath = "/workspace/data/BK/terror-dataSet-Dir/TERROR-DETECT-V1.0/Annotations"
+    statisticBboxInfo_Fun(imagelistFile=imagelistFile,
+                          xmlFileBasePath=xmlFileBasePath)
+if __name__ == '__main__':
+    main()

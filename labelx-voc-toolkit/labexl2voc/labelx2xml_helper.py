@@ -131,5 +131,4 @@ def gen_imageset_Fun(vocPath=None):
     pass
 
 
-def statisticBboxInfo_Fun(vocPath=None):
-    pass
+

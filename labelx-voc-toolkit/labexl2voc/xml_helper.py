@@ -244,11 +244,4 @@ def parseXmlFile_countBboxClassNum(xmlFile=None):
     return object_list
 
 
-def statisticBboxInfo_inXmlFiles(vocpath=None):
-    xmlBasePath = os.path.join(vocpath, 'Annotations')
-    xmlfile_list = [os.path.join(xmlBasePath,i) for i in os.listdir(
-        xmlBasePath) if i[0] != '.' and i.endswith('xml')]
-    bbox_label_count_dict = dict()
-    for xml_file in xmlfile_list:
-        object_list = parseXmlFile_countBboxClassNum(xmlFile=xml_file)
-        pass
+
