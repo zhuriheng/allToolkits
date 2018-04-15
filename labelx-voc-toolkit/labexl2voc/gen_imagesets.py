@@ -89,7 +89,7 @@ def statisticBboxInfo_Fun(imagelistFile=None,xmlFileBasePath=None):
             if not line :
                 continue
             line_count += 1
-            xmlFile = os.path.join(xmlFileBasePath, imagelistFile+'.xml')
+            xmlFile = os.path.join(xmlFileBasePath, line+'.xml')
             object_list = xml_helper.parseXmlFile_countBboxClassNum(
                 xmlFile=xmlFile)
             for i_object in object_list:
