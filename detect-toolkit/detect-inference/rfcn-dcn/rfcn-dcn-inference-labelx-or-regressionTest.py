@@ -99,20 +99,9 @@ def show_boxes_write_rg(fileOp=None, image_name=None, im=None, dets=None, classe
     imageName = image_name
     writeInfo = []
     for cls_idx, cls_name in enumerate(classes):
-        if cls_name == "not terror":
-            continue
         write_bbox_info = {}
-        if cls_name == "tibetan flag":
-            write_bbox_info['index'] = 1
-        elif cls_name == "guns":
-            write_bbox_info['index'] = 2
-        elif cls_name == "knives":
-            write_bbox_info['index'] = 3
-        elif cls_name == "islamic flag":
-            write_bbox_info['index'] = 5
-        elif cls_name == "isis flag":
-            write_bbox_info['index'] = 6
         write_bbox_info['class'] = cls_name
+        write_bbox_info['index'] = cls_idx
 
         cls_dets = dets[cls_idx]
         color = (random.randint(0, 256), random.randint(
@@ -157,6 +146,8 @@ def show_boxes_write_labelx(fileOp=None, image_name=None, im=None, dets=None, cl
     general_d_dict = dict()
     bbox_list = []
     detect_dict = dict()
+    color = (random.randint(0, 256), random.randint(
+        0, 256), random.randint(0, 256))
     for cls_idx, cls_name in enumerate(classes):
         if cls_name == "not terror":
             continue
@@ -176,7 +167,7 @@ def show_boxes_write_labelx(fileOp=None, image_name=None, im=None, dets=None, cl
             bbox_list.append(one_bbox)
             if vis:
                 cv2.rectangle(
-                    im, (bbox[0], bbox[1]), (bbox[2], bbox[3]), color=color_black, thickness=3)
+                    im, (bbox[0], bbox[1]), (bbox[2], bbox[3]), color=color, thickness=3)
                 cv2.putText(im, '%s %.3f' % (cls_name, score), (
                     bbox[0], bbox[1] + 15), color=color_black, fontFace=cv2.FONT_HERSHEY_COMPLEX, fontScale=0.5)
     if len(bbox_list) > 0:
@@ -211,9 +202,13 @@ def show_boxes(isUrlFlag=None, im_name=None, dets=None, classes=None, scale=1, v
 def process_one_batch_images_fun(isUrlFlag=False, one_batch_images_list=None, init_model_param=None, fileOp=None, vis=False):
     # init_model_param list : [sym, arg_params, aux_params]
 
-    num_classes = 7
-    classes = ['tibetan flag', 'guns', 'knives',
-               'not terror', 'islamic flag', 'isis flag']
+    num_classes = 11  # 0 is background,
+    # classes = ['tibetan flag', 'guns', 'knives',
+    #            'not terror', 'islamic flag', 'isis flag']
+    classes = ['islamic flag', 'isis flag', 'tibetan flag', 'knives_true', 'guns_true',
+               'knives_false', 'knives_kitchen',
+               'guns_anime', 'guns_tools',
+               'not terror']
     image_names = one_batch_images_list
     if len(image_names) <= 0:
         return
@@ -360,21 +355,14 @@ if __name__ == '__main__':
 
 
 """
-nohup python -u terror-process-labex-rg-demo.py \
---urlImageListFile /workspace/data/BK/terror-onlinemodel-processImage/data/input-Dir/test.txt \
---gpuId 0 \
---outputFileFlag  2 \
---outputFilePath /workspace/data/BK/terror-onlinemodel-processImage/data/output-Dir/test_output_label.json \
-
-
-python just_test_new_demo_rg_labelx.py \
---configYamlFile resnet_v1_101_terror_dcn_rfcn_end2end_ohem.yaml \
---epoch 10 \
---localImageListFile  /workspace/data/terror-det-Dir/test_rfcn_imagelist.txt \
---localImageBasePath  /workspace/data/BK/terror-dataSet-Dir/TERROR-DETECT-V0.9/JPEGImages \
+python rfcn-dcn-inference-labelx-or-regressionTest.py \
+--configYamlFile ../experiments/rfcn/cfgs/resnet_v1_101_terror_dcn_rfcn_end2end_ohem.yaml \
+--epoch 14 \
+--localImageListFile  /workspace/data/BK/terror-dataSet-Dir/TERROR-DETECT-V1.0/ImageSets/Main/test.txt \
+--localImageBasePath  /workspace/data/BK/terror-dataSet-Dir/TERROR-DETECT-V1.0/JPEGImages \
 --outputFileFlag 1 \
---outputFilePath  /workspace/data/terror-det-Dir/test_rfcn_imagelist-rg-output.txt \
+--outputFilePath   /workspace/data/BK/rfcn-dcn-res101-terror-v1.0/Deformable-ConvNets/test_output_dir/v1.0-rg.result \
 --gpuId 0 \
 --visualize True \
---visualizeOutPutPath /workspace/data/terror-det-Dir/test_rfcn_imagelist-rg-output
+--visualizeOutPutPath /workspace/data/BK/rfcn-dcn-res101-terror-v1.0/Deformable-ConvNets/test_output_dir/AnnoImages
 """
