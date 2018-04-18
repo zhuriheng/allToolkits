@@ -5,6 +5,7 @@ import sys
 import time
 import traceback
 import numpy as np
+import terror_Refinedet_config as terror_Refinedet_config
 
 from evals.utils import net_init_handler, net_inference_handler, CTX, \
     monitor_rt_load, monitor_rt_forward, monitor_rt_post
@@ -32,18 +33,12 @@ def net_init(configs):
         return None, str(e)
 
     net = Net()
-    if 'custom_params' in configs:
-        custom_params = configs['custom_params']
-        if 'threshold' in custom_params:
-            thresholds = custom_params['thresholds']
-        else:
-            thresholds = [0, 0.1, 0.1, 0.1, 0.1, 0.1, 1.0]
     try:
         net.init(config)
     except Exception, e:
         CTX.logger.error("caffe net create error: %s", traceback.format_exc())
         return None, str(e)
-    return {"net": net, "thresholds": thresholds}, ''
+    return {"net": net, "thresholds": configs['thresholds']}, ''
 
 
 @net_inference_handler
@@ -56,7 +51,7 @@ def net_inference(model, reqs):
     try:
         pre_eval(net, reqs)
         output = eval(net, reqs)
-        ret = post_eval(net, output, thresholds,reqs)
+        ret = post_eval(net, output, thresholds, reqs)
     except ErrorBase as e:
         return [{"code": e.code, "message": str(e)}], ''
     except Exception as e:
@@ -64,6 +59,7 @@ def net_inference(model, reqs):
         return [{"code": 599, "message": str(e)}], ''
 
     return ret, ''
+
 
 def preProcessImage(oriImage=None):
     img = cv2.resize(oriImage, (320, 320))
@@ -73,6 +69,7 @@ def preProcessImage(oriImage=None):
     img = img.astype(np.float32)
     img = img.transpose((2, 0, 1))
     return img
+
 
 def pre_eval(net, reqs):
     '''
@@ -92,7 +89,6 @@ def pre_eval(net, reqs):
         for i in range(cur_batchsize):
             raise ErrorOutOfBatchSize(net.batch_size)
     net.images = []
-    images = []
     _t1 = time.time()
     for i in range(cur_batchsize):
         img = load_image(reqs[i]["data"]["uri"])
@@ -103,54 +99,17 @@ def pre_eval(net, reqs):
         if img.ndim != 3:
             raise ErrorBase(400, "image ndim is " +
                             str(img.ndim) + ", should be 3")
-        net.images.append(img)
-        images.append(preProcessImage(oriImage=img))
+        net.images.append(preProcessImage(oriImage=img))
 
     _t2 = time.time()
     CTX.logger.info("load: %f\n", _t2 - _t1)
     monitor_rt_load().observe(_t2 - _t1)
+
+    images = net.images
     net.imread(images)
     _t3 = time.time()
     CTX.logger.info("transform: %f\n", _t3 - _t2)
     monitor_rt_transform().observe(_t3 - _t2)
-
-"""
-item {
-    name: "none_of_the_above"
-    label: 0
-    display_name: "background"
-}
-item {
-    name: "guns"
-    label: 1
-    display_name: "guns"
-}
-item {
-    name: "knives"
-    label: 2
-    display_name: "knives"
-}
-item {
-    name: "tibetan flag"
-    label: 3
-    display_name: "tibetan flag"
-}
-item {
-    name: "islamic flag"
-    label: 4
-    display_name: "islamic flag"
-}
-item {
-    name: "isis flag"
-    label: 5
-    display_name: "isis flag"
-}
-item {
-    name: "not terror"
-    label: 6
-    display_name: "not terror"
-}
-"""
 
 
 def post_eval(net, output, thresholds, reqs=None):
@@ -171,46 +130,38 @@ def post_eval(net, output, thresholds, reqs=None):
             "result_file": <eval result file path|string>
         }
     '''
-    # thresholds = [0,0.1,0.1,0.1,0.1,0.1,1.0]
     resps = []
+    # cur_batchsize = len(output['detection_out']) # len(output['detection_out'])  always 1
     cur_batchsize = len(reqs)
     _t1 = time.time()
-    output_bbox_list = output['detection_out'][0][0]  # output_bbox_list : bbox_count * 7
-    image_result_dict = dict() # image_id : bbox_list
+    # output_bbox_list : bbox_count * 7
+    output_bbox_list = output['detection_out'][0][0]
+    image_result_dict = dict()  # image_id : bbox_list
     for i_bbox in output_bbox_list:
         image_id = int(i_bbox[0])
+        image_data = net.images[image_id]
+        w = image_data[1]
+        h = image_data[0]
         if image_id >= cur_batchsize:
             break
-        h = net.images[image_id].shape[0]
-        w = net.images[image_id].shape[1]
-        class_index = int(i_bbox[1]) 
-        # [background,guns,knives,tibetan flag,islamic flag,isis flag,not terror]
-        if class_index < 1 or class_index >= 6:
-            continue
+        class_index = int(i_bbox[1])
         score = float(i_bbox[2])
+        if class_index == 4 or class_index < 0:
+            continue
         if score < thresholds[class_index]:
             continue
-        bbox_dict = dict()
-        bbox_dict['index'] = class_index
-        bbox_dict['score'] = score
-        bbox = i_bbox[3:7] * np.array([w, h, w, h])
-        bbox_dict['pts'] = []
-        xmin = int(bbox[0]) if int(bbox[0]) > 0 else 0
-        ymin = int(bbox[1]) if int(bbox[1]) > 0 else 0
-        xmax = int(bbox[2]) if int(bbox[2]) < w else w
-        ymax = int(bbox[3]) if int(bbox[3]) < h else h
-        bbox_dict['pts'].append([xmin, ymin])
-        bbox_dict['pts'].append([xmax, ymin])
-        bbox_dict['pts'].append([xmax, ymax])
-        bbox_dict['pts'].append([xmin, ymax])
         if image_id in image_result_dict.keys():
             the_image_bbox_list = image_result_dict.get(image_id)
-            the_image_bbox_list.append(bbox_dict)
             pass
         else:
             the_image_bbox_list = []
-            the_image_bbox_list.append(bbox_dict)
-            image_result_dict[image_id] = the_image_bbox_list
+            bbox_dict = dict()
+        bbox_dict['cls'] = class_index
+        bbox_dict['score'] = score
+        bbox = i_bbox[3:7] * np.array([w, h, w, h])
+        bbox = bbox.tolist()
+        bbox_dict['bbox'] = bbox
+        the_image_bbox_list.append(bbox_dict)
     resps = []
     for image_id in range(cur_batchsize):
         if image_id in image_result_dict.keys():
@@ -223,6 +174,7 @@ def post_eval(net, output, thresholds, reqs=None):
     CTX.logger.info("post: %f\n", _t2 - _t1)
     monitor_rt_post().observe(_t2 - _t1)
     return resps
+
 
 def eval(net, reqs):
     '''
