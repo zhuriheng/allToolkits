@@ -16,7 +16,7 @@ helpInfoStr = \
             --vocpath ,required 
             --finalVocpath , required
             将 vocpath 指向的数据集 添加到 finalVocpath 这个数据集中
-        3 : 根据已经有的图片和xmL文件生成ImageSets/Main，readme.txt
+        3 : 根据已经有的图片和xmL文件生成 ImageSets/Main，readme.txt
             --vocpath ,required 
         4 : 统计vopath bbox 的类别信息
             --vocpath ,required 

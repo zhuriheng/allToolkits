@@ -13,6 +13,7 @@
 '''
 --detClassLabelFile 需要评估的检测模型 类别文件
 '''
+    目前 index 没有用到
     eg : className modelPreIndex flag 
         flag :1 then the class compute or flag : 0 then the class not compute
         {"class":"guns","index":1,"flag":1}
@@ -36,6 +37,11 @@ from compute_each_class_accuracy import compute_each_class_accuracy
 
 
 def score_model_fun(detResultFile=None,detClassLabelFile=None,gtXmlBasePath=None):
+    """
+        className_detfile_dict is dict
+        key : class_label_name
+        value : [class_mAP_file   allImageList_file]
+    """
     className_detfile_dict = convert_detResultFile_to_pascalEvalFile(
         detResultFile=detResultFile, detClassLabelFile=detClassLabelFile)
     # compute mAP IOU = 0.5
@@ -55,8 +61,16 @@ def score_model_fun(detResultFile=None,detClassLabelFile=None,gtXmlBasePath=None
 
 # 这个函数用于 解析回归测试的结果文件，提取关于这个类的bbox
 def get_class_preBbox_file(detResultFile=None, classNameStr=None):
-    detResultFile_basePath = os.path.join(
-        detResultFile[:detResultFile.rfind('.')], 'pascal_eval')
+    """
+        这个函数的作用是：
+        将回归测试的结果文件解析了：
+        按照 传入的这个类名，将关于这个类名的bbox 写入到 className_mAP.txt 这个文件中
+        每个bbox 是一行： imageName  score xmin ymin xmax ymax
+        另外完成一个功能是：得到回归测试结果文件中的所有图片名称，保存到 allTest_imagelist.txt
+            目前对这个 allTest_imagelist.txt 会重复写入多次（每个类别一次）。
+            每次的写入结果都是一样的。
+    """
+    detResultFile_basePath = os.path.join(detResultFile, 'pascal_eval')
     if not os.path.exists(detResultFile_basePath):
         os.makedirs(detResultFile_basePath)
     detResultFile_basePath_classFile = os.path.join(
@@ -66,7 +80,7 @@ def get_class_preBbox_file(detResultFile=None, classNameStr=None):
     class_image_list = []
     with open(detResultFile_basePath_classFile, 'w') as w_f, open(detResultFile, 'r') as r_f:
         for line in r_f.readlines():
-            if len(line) <= 0:
+            if len(line.strip()) <= 0:
                 continue
             image_name, bbox_lists = line.strip().split('\t')
             class_image_list.append(image_name[:image_name.rfind('.')])
@@ -95,8 +109,8 @@ def convert_detResultFile_to_pascalEvalFile(detResultFile=None, detClassLabelFil
         detClassLabelFile is score class label file
         这个函数的作用是，根据要计算的类的名称，将检测回归测试的结果文件，分开形成 单独类别的预测结果文件
         return dict: 
-                    key is  className ,
-                    value is list ; absolute path of  the pascal eval need class file , test imagelist file
+            key is  className ,
+            value is list ; absolute path of  the pascal eval need class file , test imagelist file
     """
     class_label_dict = {}
     # key is class label name
@@ -109,6 +123,7 @@ def convert_detResultFile_to_pascalEvalFile(detResultFile=None, detClassLabelFil
             else:
                 resFile = get_class_preBbox_file(
                     detResultFile=detResultFile, classNameStr=line_dict['class'])
+                # resFile : [class_***_mAP_file   allImageList_file]
                 class_label_dict[line_dict['class']] = resFile
                 # print(resFile)
     return class_label_dict

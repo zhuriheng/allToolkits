@@ -20,6 +20,9 @@ def process_labelx_jsonFile_Fun(json_file_absolutePath=None, tempSaveDir=None, v
     pass
 
 def covertLabelxMulFilsToVoc_Fun(labelxPath=None,vocResultPath=None):
+    """
+        将指定目录下的所有打标过的json 文件转换成 pascal xml 格式数据
+    """
     inputDir = labelxPath
     tempSaveDir = labelxPath+"-xmlNeedTempFileDir"
     vocpath = vocResultPath
@@ -124,11 +127,40 @@ def mergePascalDataset(littlePath=None, finalPath=None):
 
 
 def getTimeFlag():
-    return time.strftime("%Y-%m-%d-%H", time.localtime())
+    return time.strftime("%Y-%m-%d-%H-%M-%s", time.localtime())
 
+# 根据 图片 和 xml 文件 生成 Main 目录下的 trainval.txt  test.txt
 def gen_imageset_Fun(vocPath=None):
     gen_imagesets.gen_imagesets(vocpath=vocPath)
     pass
 
+# 统计数据集中的bbox的信息
+def statisticBboxInfo_Fun(vocPath=None):
+    mainDir = os.path.join(vocPath, 'ImageSets/Main')
+    if not os.path.exists(mainDir):
+        print("ImageSets/Main  not exist , so first create")
+        gen_imageset_Fun(vocPath=vocPath)
+    xmlPath = os.path.join(vocPath, 'Annotations')
+    trainval_file = os.path.join(vocPath, 'ImageSets/Main', 'trainval.txt')
+    trainval_file_res_dict = gen_imagesets.statisticBboxInfo(
+        imagelistFile=trainval_file, xmlFileBasePath=xmlPath, printFlag=True)
+    test_file = os.path.join(vocPath, 'ImageSets/Main', 'test.txt')
+    test_file_res_dict = gen_imagesets.statisticBboxInfo(
+        imagelistFile=test_file, xmlFileBasePath=xmlPath, printFlag=True)
+    # write the statistic bbox info to file
+    statisLogFile = os.path.join(vocPath,'statistic-bbox-log.log')
+    with open(statisLogFile,'a') as f:
+        f.write('*'*10+getTimeFlag()+'*'*10)
+        keys = trainval_file_res_dict.keys() if len(trainval_file_res_dict.keys()) > len(
+            test_file_res_dict.keys()) else test_file_res_dict.keys()
+        for i in sorted(keys):
+            count = 0
+            if i in trainval_file_res_dict.keys():
+                count += trainval_file_res_dict.get(i)
+            if i in test_file_res_dict.keys():
+                count += test_file_res_dict.get(i)
+            line = "%s\t%d\n" % (i.ljust(30,' '),count)
+            f.write(line)
+    pass
 
 

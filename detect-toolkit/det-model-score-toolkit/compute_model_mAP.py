@@ -1,6 +1,7 @@
 # -*- coding:utf-8 -*-
 """
 compute mAP
+这个脚本用于计算 mAP
 """
 
 import numpy as np
@@ -80,12 +81,23 @@ def voc_eval(detfile=None, annopath=None, imageset_file=None, classname=None, ov
     image_filenames = [x.strip() for x in lines]
 
     # load annotations
-    recs = {}
+    recs = {} # 
+    """
+       recs dict :
+       key :  image_filename
+       value : type list , objects of the xml file ; element is object 
+                           object : dict 
+                                    {
+                                       'name',
+                                       'difficult',
+                                       'bbox'
+                                    }
+    """
     for ind, image_filename in enumerate(image_filenames):
         xmlFile = os.path.join(annopath, image_filename+'.xml')
         recs[image_filename] = parse_voc_rec(xmlFile)
     # extract objects in :param classname:
-    class_recs = {}
+    class_recs = {} #
     npos = 0
     for image_filename in image_filenames:
         objects = [obj for obj in recs[image_filename]
@@ -162,10 +174,14 @@ def voc_eval(detfile=None, annopath=None, imageset_file=None, classname=None, ov
     return rec, prec, ap
 
 def compute_model_mAP(className_detfile_dict=None, gtXmlBasePath=None):
+    """
+        className_detfile_dict is dict
+        key : class_label_name
+        value : [class_mAP_file   allImageList_file]
+        class_mAP_file : one line is a bbox :  imageName score xmin ymin xmax ymax
+    """
     class_ap_dict = {}
     for key in className_detfile_dict.keys():
-        # print("compute mAP process : begin %s ap ,the detect result file is : %s" %
-        #       (key, className_detfile_dict.get(key)[0]))
         rec, prec, ap = voc_eval(detfile=className_detfile_dict.get(key)[0], annopath=gtXmlBasePath, imageset_file=className_detfile_dict.get(key)[1], classname=key, ovthresh=0.5, use_07_metric=True)
         class_ap_dict[key] = [rec, prec, ap]
     mAP = 0
