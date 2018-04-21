@@ -13,6 +13,7 @@ def process_labelx_jsonFile_Fun(json_file_absolutePath=None, tempSaveDir=None, v
     # 下载 对应的image,保存下载的图片到 vocpath+'/JPEGImages'
     image_helper.downloadImage_By_urllist(labelxjson=json_file_absolutePath, tempSaveDir=tempSaveDir, vocpath=vocpath)
     # 将 labelx 标注的数据 转换 pascal voc xml 文件
+    # 对待下载失败的图片，添加处理方式
     xml_helper.convertLabelxJsonListToXmlFile(
         jsonlistFile=json_file_absolutePath, datasetBasePath=vocpath)
     # 这个是生成 pascal voc 格式的数据集 xml  jpg txt

@@ -5,45 +5,37 @@ import sys
 import time
 import traceback
 import numpy as np
-
-from evals.utils import net_init_handler, net_inference_handler, CTX, \
+import caffe
+import cv2
+import hashlib
+from evals.utils import create_net_handler, net_preprocess_handler, net_inference_handler, CTX, \
     monitor_rt_load, monitor_rt_forward, monitor_rt_post
-
-from evals.utils import *
 from evals.utils.error import *
-from evals.utils.header import Header, wrap_header
-from evals.utils.logger import logger
 from evals.utils.image import load_image
-from evals.caffe_base.net import NetConfig, Net
 
 
-@net_init_handler
-def net_init(configs):
+@create_net_handler
+def create_net(configs):
 
     CTX.logger.info("load configs: %s", configs)
+    caffe.set_mode_gpu()
+    deploy = str(configs['model_files']["deploy.prototxt"])
+    weight = str(configs['model_files']["weight.caffemodel"])
 
-    config = NetConfig()
-    try:
-        config.parse(configs)
-    except (ErrorConfig, ErrorFileNotExist) as e:
-        return None, str(e)
-    except Exception, e:
-        CTX.logger.error("caffe net create error: %s", traceback.format_exc())
-        return None, str(e)
-
-    net = Net()
+    net = caffe.Net(deploy, weight, caffe.TEST)
     if 'custom_params' in configs:
         custom_params = configs['custom_params']
         if 'threshold' in custom_params:
             thresholds = custom_params['thresholds']
         else:
             thresholds = [0, 0.1, 0.1, 0.1, 0.1, 0.1, 1.0]
-    try:
-        net.init(config)
-    except Exception, e:
-        CTX.logger.error("caffe net create error: %s", traceback.format_exc())
-        return None, str(e)
-    return {"net": net, "thresholds": thresholds}, ''
+    return {"net": net, "thresholds": thresholds, "batch_size": configs['batch_size']}, 0, ''
+
+
+@net_preprocess_handler
+def net_preprocess(model, req):
+    CTX.logger.info("PreProcess...")
+    return req, 0, ''
 
 
 @net_inference_handler
@@ -51,19 +43,18 @@ def net_inference(model, reqs):
 
     net = model["net"]
     thresholds = model["thresholds"]
+    batch_size = model['batch_size']
     CTX.logger.info("inference begin ...")
-
     try:
-        pre_eval(net, reqs)
-        output = eval(net, reqs)
-        ret = post_eval(net, output, thresholds, reqs)
+        image_shape_list_h_w, images = pre_eval(net, batch_size, reqs)
+        output = eval(net, images)
+        ret = post_eval(output, thresholds, image_shape_list_h_w)
     except ErrorBase as e:
-        return [{"code": e.code, "message": str(e)}], ''
+        return [], e.code, str(e)
     except Exception as e:
         CTX.logger.error("inference error: %s", traceback.format_exc())
-        return [{"code": 599, "message": str(e)}], ''
-
-    return ret, ''
+        return [], 599, str(e)
+    return ret, 0, ''
 
 
 def preProcessImage(oriImage=None):
@@ -76,7 +67,7 @@ def preProcessImage(oriImage=None):
     return img
 
 
-def pre_eval(net, reqs):
+def pre_eval(net, batch_size, reqs):
     '''
         prepare net forward data
         Parameters
@@ -90,31 +81,29 @@ def pre_eval(net, reqs):
         message: error message, string
     '''
     cur_batchsize = len(reqs)
-    if cur_batchsize > net.batch_size:
+    CTX.logger.info("cur_batchsize: %d\n", cur_batchsize)
+    if cur_batchsize > batch_size:
         for i in range(cur_batchsize):
-            raise ErrorOutOfBatchSize(net.batch_size)
-    net.images = []
+            raise ErrorOutOfBatchSize(batch_size)
+    image_shape_list_h_w = []
     images = []
     _t1 = time.time()
     for i in range(cur_batchsize):
-        img = load_image(reqs[i]["data"]["uri"])
+        data = reqs[i]
+        img = load_image(data["data"]["uri"], body=data['data']['body'])
+        if img is None:
+            CTX.logger.info("input data is none : %s\n", data)
+            raise ErrorBase(400, "image data is None ")
         height, width, _ = img.shape
-        if height <= 32 or width <= 32:
-            raise ErrorBase(400, "image too small " +
-                            str(height) + "x" + str(width))
         if img.ndim != 3:
             raise ErrorBase(400, "image ndim is " +
                             str(img.ndim) + ", should be 3")
-        net.images.append(img)
+        image_shape_list_h_w.append([height, width])
         images.append(preProcessImage(oriImage=img))
-
     _t2 = time.time()
-    CTX.logger.info("load: %f\n", _t2 - _t1)
+    CTX.logger.info("read image and transform: %f\n", _t2 - _t1)
     monitor_rt_load().observe(_t2 - _t1)
-    net.imread(images)
-    _t3 = time.time()
-    CTX.logger.info("transform: %f\n", _t3 - _t2)
-    monitor_rt_transform().observe(_t3 - _t2)
+    return image_shape_list_h_w, images
 
 
 """
@@ -156,7 +145,7 @@ item {
 """
 
 
-def post_eval(net, output, thresholds, reqs=None):
+def post_eval(output, thresholds, image_shape_list_h_w):
     '''
         parse net output, as numpy.mdarray, to EvalResponse
         Parameters
@@ -176,7 +165,7 @@ def post_eval(net, output, thresholds, reqs=None):
     '''
     # thresholds = [0,0.1,0.1,0.1,0.1,0.1,1.0]
     resps = []
-    cur_batchsize = len(reqs)
+    cur_batchsize = len(image_shape_list_h_w)
     _t1 = time.time()
     # output_bbox_list : bbox_count * 7
     output_bbox_list = output['detection_out'][0][0]
@@ -185,8 +174,8 @@ def post_eval(net, output, thresholds, reqs=None):
         image_id = int(i_bbox[0])
         if image_id >= cur_batchsize:
             break
-        h = net.images[image_id].shape[0]
-        w = net.images[image_id].shape[1]
+        h = image_shape_list_h_w[image_id][0]
+        w = image_shape_list_h_w[image_id][1]
         class_index = int(i_bbox[1])
         # [background,guns,knives,tibetan flag,islamic flag,isis flag,not terror]
         if class_index < 1 or class_index >= 6:
@@ -229,13 +218,20 @@ def post_eval(net, output, thresholds, reqs=None):
     return resps
 
 
-def eval(net, reqs):
+def eval(net, images):
     '''
         eval forward inference
         Return
         ---------
         output: network numpy.mdarray
     '''
+    _t1 = time.time()
+    for index, i_data in enumerate(images):
+            net.blobs['data'].data[index] = i_data
+    _t2 = time.time()
+    CTX.logger.info("load image to net: %f\n", _t2 - _t1)
+    monitor_rt_forward().observe(_t2 - _t1)
+
     _t1 = time.time()
     output = net.forward()
     _t2 = time.time()
@@ -247,12 +243,3 @@ def eval(net, reqs):
     if 'detection_out' not in output or len(output['detection_out']) < 1:
         raise ErrorForwardInference()
     return output
-
-
-def main():
-    config={
-        
-    }
-
-if __name__ == '__main__':
-    main()

@@ -1,0 +1,16 @@
+version: 2018-04-20
+infomation: # 
+refinedet:
+  models:   # model path
+    deploy:
+    weights:
+    labels:
+  thresholds:
+  batch-size:
+  input:
+    flag: # 0 or 1 , 0 is input is url ; 1 is input is local image
+    image-list: # image list file , if flag == 1 then each line is a image path and the line must be absolute path
+  output:
+    flag: # 0 or 1 , 0 is
+  
+    

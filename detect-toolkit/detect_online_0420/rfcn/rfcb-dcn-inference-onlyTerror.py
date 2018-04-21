@@ -98,10 +98,10 @@ def show_boxes_write_rg(fileOp=None, image_name=None, im=None, dets=None, classe
     color_white = (255, 255, 255)
     color_black = (0, 0, 0)
     # write to terror det rg tsv file
-    thresholds=[0,0.8,0.8,0.8,0.7,0.7,1.0,1.0,1.0,1.0,1.0]
+    thresholds = [0, 0.8, 0.8, 0.8, 0.7, 0.7, 1.0, 1.0, 1.0, 1.0, 1.0]
     imageName = image_name
     writeInfo = []
-    for cls_idx, cls_name in enumerate(classes[1:],start=1):
+    for cls_idx, cls_name in enumerate(classes[1:], start=1):
         if cls_idx > 5:
             continue
         write_bbox_info = {}
@@ -125,7 +125,7 @@ def show_boxes_write_rg(fileOp=None, image_name=None, im=None, dets=None, classe
             bbox_position_list.append([bbox[0], bbox[3]])
             one_bbox_write["pts"] = bbox_position_list
             # one_bbox_write["score"] = float(score)
-            one_bbox_write["score"] = score.astype(np.float32)
+            one_bbox_write["score"] = float(score)
             writeInfo.append(one_bbox_write)
             if vis:
                 cv2.rectangle(
@@ -214,7 +214,7 @@ def process_one_batch_images_fun(isUrlFlag=False, one_batch_images_list=None, in
     # classes = ['tibetan flag', 'guns', 'knives',
     #            'not terror', 'islamic flag', 'isis flag']
     classes = ['__background__',
-        'islamic flag', 'isis flag', 'tibetan flag', 'knives_true', 'guns_true',
+               'islamic flag', 'isis flag', 'tibetan flag', 'knives_true', 'guns_true',
                'knives_false', 'knives_kitchen',
                'guns_anime', 'guns_tools',
                'not terror']

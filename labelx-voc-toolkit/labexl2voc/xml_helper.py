@@ -184,6 +184,10 @@ def createXmlFileByLabelXJsonList(labelxJsonLine=None, basePath=None):
     appendSourceText(root=root)
     appendOwnerText(root=root)
     imageLocalImagePath = os.path.join(basePath,'JPEGImages', imageName)
+    if not os.path.exists(imageLocalImagePath):
+        # 由于图片不存在，下载图片时候出错，所以不创建这个图片对应的xml 文件
+        return "error"
+        pass
     res = appendSizeText(root=root, imagePath=imageLocalImagePath)
     if res == None:
         # because the image can't read ,so delete the image
@@ -221,7 +225,7 @@ def convertLabelxJsonListToXmlFile(jsonlistFile=None,datasetBasePath=None):
             res = createXmlFileByLabelXJsonList(
                 labelxJsonLine=line, basePath=datasetBasePath)
             if res == "error":
-                print("ERROR")
+                print("ERROR : %s" % (line))
 
 
 def parseXmlFile_countBboxClassNum(xmlFile=None):
