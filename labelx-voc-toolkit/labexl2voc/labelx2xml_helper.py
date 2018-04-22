@@ -151,7 +151,7 @@ def statisticBboxInfo_Fun(vocPath=None):
     # write the statistic bbox info to file
     statisLogFile = os.path.join(vocPath,'statistic-bbox-log.log')
     with open(statisLogFile,'a') as f:
-        f.write('*'*10+getTimeFlag()+'*'*10)
+        f.write('*'*10+getTimeFlag()+'*'*10+'\n')
         keys = trainval_file_res_dict.keys() if len(trainval_file_res_dict.keys()) > len(
             test_file_res_dict.keys()) else test_file_res_dict.keys()
         for i in sorted(keys):
