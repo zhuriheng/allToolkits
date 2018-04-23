@@ -70,7 +70,11 @@ def get_class_preBbox_file(detResultFile=None, classNameStr=None):
             目前对这个 allTest_imagelist.txt 会重复写入多次（每个类别一次）。
             每次的写入结果都是一样的。
     """
-    detResultFile_basePath = os.path.join(detResultFile, 'pascal_eval')
+    if '.' in os.path.basename(detResultFile):
+        tempPath = detResultFile[:detResultFile.rfind('.')]
+        detResultFile_basePath = os.path.join(tempPath, 'pascal_eval')
+    else:
+        detResultFile_basePath = os.path.join(detResultFile, 'pascal_eval')
     if not os.path.exists(detResultFile_basePath):
         os.makedirs(detResultFile_basePath)
     detResultFile_basePath_classFile = os.path.join(
