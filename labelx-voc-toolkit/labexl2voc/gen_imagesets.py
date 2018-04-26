@@ -127,8 +127,8 @@ def statisticBboxInfo_one_class(imagelistFile=None, xmlFileBasePath=None, printF
                 xmlFile=xmlFile)
             for i_object in object_list:
                 label = i_object['name']
-                if label in ['isis flag', 'islamic flag', 'tibetan flag']
-                    print(imagelistFile)
+                if label in ['isis flag', 'islamic flag', 'tibetan flag']:
+                    print(line)
                 # if label in label_count_dict:
                 #     label_count_dict[label] = label_count_dict[label] + 1
                 # else:
