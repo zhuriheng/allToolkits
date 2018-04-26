@@ -23,6 +23,7 @@ from caffe.proto import caffe_pb2
 
 """
 
+
 def parser_args():
     parser = ArgumentParser('bk detect caffe  refineDet model!')
     # localImageNameFile & localImageBasePath
@@ -48,23 +49,26 @@ def parser_args():
     parser.add_argument('--labelFileName', required=True, dest='labelFileName', help='label file name',
                         default=None, type=str)
     parser.add_argument('--visFlag', dest='visFlag', help='visulize the detect bbox',
-                        default=0, type=int) # 0 : not visulize , 1 : visulize
+                        default=0, type=int)  # 0 : not visulize , 1 : visulize
     # parser.add_argument('--threshold', dest='threshold',
     #                     default=0.1, type=float)
     return parser.parse_args()
 
+
 RESULT_FILE_OP = None  # 用于保存结果文件
-VISSAVEDIR = None # 该目录用于存放 检测结果图片（原图+bbox)
+VISSAVEDIR = None  # 该目录用于存放 检测结果图片（原图+bbox)
+
+
 def temp_init():
     global RESULT_FILE_OP
     global THRESHOLDS  # 各个类别的阈值
     global URLFLAG   # 图片是否是url
-    global IMAGE_SIZE # 处理图片的大小
+    global IMAGE_SIZE  # 处理图片的大小
     global ONE_BATCH_SIZE  # batch size 的大小 （ 要和 deploy 的设置一致）
-    global VISSAVEDIR 
-    ONE_BATCH_SIZE = 16
+    global VISSAVEDIR
+    ONE_BATCH_SIZE = 1
     URLFLAG = True if args.urlfileName else False
-    IMAGE_SIZE = 320
+    IMAGE_SIZE = 512
     THRESHOLDS = [0, 0.1, 0.1, 0.1, 0.1, 0.1, 1.0]
     if args.urlfileName:
         result_file = args.urlfileName+'-' + \
@@ -80,6 +84,7 @@ def temp_init():
     RESULT_FILE_OP = open(result_file, 'w')
     pass
 
+
 """
 0 : "background"
 1 : "guns"
@@ -91,26 +96,9 @@ def temp_init():
 """
 
 
-def post_eval(input_image, batch_image_path, batch_image_h_w,output, reqs=None):
+def post_eval(input_image, batch_image_path, batch_image_h_w, output, reqs=None):
     global THRESHOLDS
     global CLS_LABEL_LIST
-    '''
-        parse net output, as numpy.mdarray, to EvalResponse
-        Parameters
-        ----------
-        net: net created by net_init
-        output: list of tuple(score, boxes)
-        reqs: parsed reqs from net_inference
-        reqid: reqid from net_inference
-        Return
-        ----------
-        resps: list of EvalResponse{
-            "code": <code|int>,
-            "message": <error message|str>,
-            "result": <eval result|object>,
-            "result_file": <eval result file path|string>
-        }
-    '''
     # cur_batchsize = len(output['detection_out']) # len(output['detection_out'])  always 1
     cur_batchsize = len(input_image)
     print("cur_batchsize is : %d" % (cur_batchsize))
@@ -126,14 +114,16 @@ def post_eval(input_image, batch_image_path, batch_image_h_w,output, reqs=None):
         w = batch_image_h_w[image_id][1]
         h = batch_image_h_w[image_id][0]
         class_index = int(i_bbox[1])
-        if class_index < 1 or class_index >= 6:
-            continue
+        #if class_index < 1 or class_index >= 6:
+        #    continue
         score = float(i_bbox[2])
-        if score < THRESHOLDS[class_index]:
-            continue
+        #if score < THRESHOLDS[class_index]:
+        #    continue
+        if score < 0.8:
+           continue
         bbox_dict = dict()
         bbox_dict['index'] = class_index
-        bbox_dict['class'] = CLS_LABEL_LIST[class_index]
+        bbox_dict['class'] = CLS_LABEL_LIST[class_index-1]
         bbox_dict['score'] = score
         bbox = i_bbox[3:7] * np.array([w, h, w, h])
         bbox_dict['pts'] = []
@@ -163,7 +153,7 @@ def post_eval(input_image, batch_image_path, batch_image_h_w,output, reqs=None):
         resps.append(
             {"code": 0, "message": batch_image_path[image_id], "result": result})
     _t2 = time.time()
-    print("post_eval the batch time is  : %f"%(_t2 - _t1))
+    print("post_eval the batch time is  : %f" % (_t2 - _t1))
     return resps
 
 
@@ -199,7 +189,8 @@ def init_models():
     labelName = os.path.join(args.modelBasePath, args.labelFileName)
     net_cls = caffe.Net(deployName, modelName, caffe.TEST)
     with open(labelName, 'r') as f:
-        CLS_LABEL_LIST = [i.strip().split(',')[-1] for i in f.readlines() if i.strip()]
+        CLS_LABEL_LIST = [i.strip().split(',')[-1]
+                          for i in f.readlines() if i.strip()]
     return net_cls
 
 
@@ -227,11 +218,13 @@ def getImagePath():
 def preProcess(oriImage=None):
     img = cv2.resize(oriImage, (IMAGE_SIZE, IMAGE_SIZE))
     img = img.astype(np.float32, copy=False)
-    img = img - np.array([[[103.52, 116.28, 123.675]]])
-    img = img * 0.017  # 根据训练网络结构中  transform_param 是否 使用 scala
+    img = img - np.array([[[104, 117, 123]]])
+    img = img * 0.017  # 根据训练网络结构中  transform_param 是否 使用 scala 
     img = img.astype(np.float32)
     img = img.transpose((2, 0, 1))
     return img
+
+
 def infereneAllImage(net_cls=None, imageList=None, urlFlag=None):
     global ONE_BATCH_SIZE
     batch_image_data = []
@@ -296,6 +289,8 @@ def infereneAllImage(net_cls=None, imageList=None, urlFlag=None):
                         batch_image_h_w, output, reqs=None)
         process_res(res_list=res)
     return
+
+
 def process_res(res_list=None):
     for image_res in res_list:
         # image_res is dict
@@ -317,7 +312,7 @@ def write_rf(image_res=None):
 
 
 def vis(imageName=None, bbox_list=None):
-    global VISSAVEDIR 
+    global VISSAVEDIR
     im = cv2.imread(imageName, cv2.IMREAD_COLOR)
     out_file = os.path.join(VISSAVEDIR,
                             imageName.split('/')[-1])

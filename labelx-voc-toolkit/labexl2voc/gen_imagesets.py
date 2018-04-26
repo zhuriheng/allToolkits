@@ -103,10 +103,49 @@ def statisticBboxInfo(imagelistFile=None,xmlFileBasePath=None,printFlag=True):
             print("%s : %d" % (key, label_count_dict[key]))
     return label_count_dict
 
+
+"""
+temp fun
+"""
+
+
+def statisticBboxInfo_one_class(imagelistFile=None, xmlFileBasePath=None, printFlag=True):
+    """
+      imagelistFile is file , per line is a image(xml) file 
+        not include jpg or xml 
+    """
+    line_count = 0
+    label_count_dict = dict()
+    with open(imagelistFile, 'r') as f:
+        for line in f.readlines():
+            line = line.strip()
+            if not line:
+                continue
+            line_count += 1
+            xmlFile = os.path.join(xmlFileBasePath, line+'.xml')
+            object_list = xml_helper.parseXmlFile_countBboxClassNum(
+                xmlFile=xmlFile)
+            for i_object in object_list:
+                label = i_object['name']
+                if label in ['isis flag', 'islamic flag', 'tibetan flag']
+                    print(imagelistFile)
+                # if label in label_count_dict:
+                #     label_count_dict[label] = label_count_dict[label] + 1
+                # else:
+                #     label_count_dict[label] = 1
+    # if printFlag:
+    #     print("*"*100)
+    #     print("image count in %s is : %d" % (imagelistFile, line_count))
+    #     for key in sorted(label_count_dict.keys()):
+    #         print("%s : %d" % (key, label_count_dict[key]))
+    # return label_count_dict
+
 def main():
-    imagelistFile = "/workspace/data/BK/terror-dataSet-Dir/TERROR-DETECT-V1.0/ImageSets/Main/trainval.txt"
+    # imagelistFile = "/workspace/data/BK/terror-dataSet-Dir/TERROR-DETECT-V1.0/ImageSets/Main/trainval.txt"
+    imagelistFile = "/workspace/data/BK/terror-dataSet-Dir/TERROR-DETECT-V1.0/ImageSets/Main/test.txt"
     xmlFileBasePath = "/workspace/data/BK/terror-dataSet-Dir/TERROR-DETECT-V1.0/Annotations"
-    statisticBboxInfo(imagelistFile=imagelistFile,
-                          xmlFileBasePath=xmlFileBasePath)
+    # statisticBboxInfo(imagelistFile=imagelistFile,
+    #                       xmlFileBasePath=xmlFileBasePath)
+    statisticBboxInfo_one_class(imagelistFile=imagelistFile,xmlFileBasePath=xmlFileBasePath)
 if __name__ == '__main__':
     main()
