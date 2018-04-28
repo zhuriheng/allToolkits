@@ -9,6 +9,7 @@ import  gen_imagesets
 import image_helper
 import xml_helper
 import labelxJson_helper
+import cv2
 
 
 def process_labelx_jsonFile_Fun(json_file_absolutePath=None, tempSaveDir=None, vocpath=None):
@@ -168,6 +169,9 @@ def statisticBboxInfo_Fun(vocPath=None):
 
 
 def drawImageWithBbox(absoluteImagePath=None, absoluteXmlFilePath=None, savePath=None):
+    print("absoluteImagePath is %s ;\tabsoluteXmlFilePath is %s" %
+          (absoluteImagePath, absoluteXmlFilePath))
+    print("savePath : %s" % (savePath))
     tree = etree.parse(absoluteXmlFilePath)
     rooTElement = tree.getroot()
     object_list = []
@@ -194,7 +198,6 @@ def drawImageWithBbox(absoluteImagePath=None, absoluteXmlFilePath=None, savePath
     for object in object_list:
         color = (random.randint(0, 256), random.randint(
             0, 256), random.randint(0, 256))
-        print(object)
         cv2.rectangle(im, (int(object.get('xmin')), int(object.get('ymin'))), (int(
             object.get('xmax')), int(object.get('ymax'))), color=color, thickness=1)
         cv2.putText(im, '%s' % (object.get('name')), (int(object.get('xmin')), int(object.get(
@@ -213,7 +216,7 @@ def drawImageWithBbosFun(vocPath=None):
     random_xml_list = random.sample(xmlList, len(xmlList)//1000)
     for xml_name in random_xml_list:
         xmlFile = os.path.join(xmlFilePath, xml_name)
-        imageFile = os.path.join(imageFilePath, xml_name[:xml_name.rfind('.')+'jpg'])
+        imageFile = os.path.join(imageFilePath, xml_name[:xml_name.rfind('.')]+'.jpg')
         saveImageFile = os.path.join(drawImageSavePath, imageFile)
         drawImageWithBbox(absoluteImagePath=imageFile,
                           absoluteXmlFilePath=xmlFile, savePath=saveImageFile)
