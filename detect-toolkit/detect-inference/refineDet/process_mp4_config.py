@@ -15,11 +15,11 @@ refinedet_config={
         8: 'truck'
     },
     'need_label_thresholds': {
-        1: 0.2,
-        3: 0.2,
-        4: 0.2,
-        6: 0.2,
-        8: 0.2
+        1: 0.4,
+        3: 0.4,
+        4: 0.4,
+        6: 0.4,
+        8: 0.4
     }
 }
 face_detect_config={
@@ -29,7 +29,7 @@ face_detect_config={
         "label": "/workspace/data/BK/process-mp4/face-rd-18-t0/model/labels.csv",
         "batch_size": 1
     },
-    "gpuId": 1, # not use
+    "gpuId": 1,  # not use , because caffe.set_mode_gpu()  and caffe.set_device() is global
     'image_size': 512,
     'need_label_dict': {
         1: 'face'

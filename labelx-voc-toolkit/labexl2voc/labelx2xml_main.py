@@ -15,6 +15,9 @@ helpInfoStr = \
         2 : 将一个 pascal voc 数据集 添加到 另外一个数据集中
             --vocpath ,required 
             --finalVocpath , required
+            --flag ,"overwrite,append"  
+                    overwrite 表示如果 存在 xml文件名相同，那么就覆盖原有的xml文件，重新生成。
+                    append 表示如果 存在xml 文件，那么进行 bbox 追加
             将 vocpath 指向的数据集 添加到 finalVocpath 这个数据集中
         3 : 根据已经有的图片和xmL文件生成 ImageSets/Main，readme.txt
             --vocpath ,required 

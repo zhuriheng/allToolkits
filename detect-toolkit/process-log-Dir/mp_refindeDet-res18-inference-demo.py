@@ -88,11 +88,17 @@ class Producer_Of_ImageDataQueue_And_consumer_Of_imageNameQueue(multiprocessing.
     def run(self):
         print("LOGINFO---%s---Thread %s begin running" %(self.getTimeFlag(), self.threadName))
         # self.urlFlag=self.paramDict['urlFlag']
+        timeout_count = 0
         while True:
             try:
                 imagePath = self.imageNameQueue.get(block=True, timeout=120)
             except:
                 print("%s : %s  get timeout" % (self.getTimeFlag(),self.threadName))
+                timeout_count += 1
+                if timeout_count >5:
+                    print("LOGINFO---%s---Thread exception,so kill %s" %
+                          (self.getTimeFlag(),self.threadName))
+                    break
                 continue
             else:
                 if imagePath == None:
@@ -184,6 +190,7 @@ class Consumer_Of_ImageDataQueue_Inference(multiprocessing.Process):
         self.preInitial()
         self.initalNetModel()
         endGetImageDataThreadCount = 0
+        time_out_count = 0
         while True:
             # print("debug : %s   %s" % (str(self.imageDataQueue.qsize()),
             #                            str(self.imageDataQueue.empty())))
@@ -191,6 +198,11 @@ class Consumer_Of_ImageDataQueue_Inference(multiprocessing.Process):
                 next_imageData = self.imageDataQueue.get(block=True, timeout=120)
             except :
                 print("%s  get timeout" % (self.threadName))
+                time_out_count += 1
+                if endGetImageDataThreadCount >= self.paramDict['imageDataProducerCount'] or time_out_count >8:
+                    print("LOGINFO---%s---Thread Exception so kill  %s " %
+                          (self.getTimeFlag(), self.threadName))
+                    break
                 continue
             else:
                 if next_imageData == None:

@@ -18,21 +18,20 @@ import time
 """
 
 
-
 class Producer_Of_ImageNameQueue(multiprocessing.Process):
-    def __init__(self, imageNameQueue, paramDictJsonStr, threadName,threadStageDict):
+    def __init__(self, imageNameQueue, imageName_lock, paramDictJsonStr, threadName):
         multiprocessing.Process.__init__(self)
         self.imageNameQueue = imageNameQueue
         self.paramDict = json.loads(paramDictJsonStr)
         self.threadName = threadName
-        self.threadStageDict = threadStageDict
+        self.lock = imageName_lock
 
     def getTimeFlag(self):
         return time.strftime("%Y:%m:%d:%H:%M:%S", time.localtime())
+
     def run(self):
         print("LOGINFO---%s---Thread %s begin running" %
               (self.getTimeFlag(), self.threadName))
-        print(self.threadStageDict)
         fileName = self.paramDict['inputFileName']
         beginIndex = int(self.paramDict['beginIndex'])
         with open(fileName, 'r') as f:
@@ -40,25 +39,37 @@ class Producer_Of_ImageNameQueue(multiprocessing.Process):
                 line = line.strip()
                 if len(line) <= 0:
                     continue
-                self.imageNameQueue.put(line)
-        self.threadStageDict['producer_Of_ImageNameQueue'] -= 1
+                self.lock.acquire()
+                try:
+                    self.imageNameQueue.put(line)
+                except:
+                    print("LOGINFO---%s---Thread %s put image name in queue exception" %
+                          (self.getTimeFlag(), self.threadName))
+                finally:
+                    self.lock.release()
+        for i in range(int(self.paramDict['imageDataProducerCount'])):
+            self.lock.acquire()
+            self.imageNameQueue.put(None)
+            self.lock.release()
         print("LOGINFO---%s---Thread %s end" %
               (self.getTimeFlag(), self.threadName))
         pass
 
 
 class Producer_Of_ImageDataQueue_And_consumer_Of_imageNameQueue(multiprocessing.Process):
-    def __init__(self, imageNameQueue, imageDataQueue, paramDictJsonStr, threadName, threadStageDict):
+    def __init__(self, imageNameQueue, imageName_lock, imageDataQueue, imageData_lock, paramDictJsonStr, threadName):
         multiprocessing.Process.__init__(self)
         self.imageNameQueue = imageNameQueue
         self.imageDataQueue = imageDataQueue
         self.paramDict = json.loads(paramDictJsonStr)
         self.urlFlag = True
         self.threadName = threadName
-        self.threadStageDict = threadStageDict
+        self.imageName_lock = imageName_lock
+        self.imageData_lock = imageData_lock
 
     def getTimeFlag(self):
         return time.strftime("%Y:%m:%d:%H:%M:%S", time.localtime())
+
     def readImage_fun(self, isUrlFlag=None, imagePath=None):
         """
             isUrlFlag == True , then read image from url
@@ -78,8 +89,6 @@ class Producer_Of_ImageDataQueue_And_consumer_Of_imageNameQueue(multiprocessing.
                     im = cv2.imdecode(nparr, 1)
                 except:
                     im = None
-                finally:
-                    pass
             finally:
                 return im
         else:
@@ -89,38 +98,50 @@ class Producer_Of_ImageDataQueue_And_consumer_Of_imageNameQueue(multiprocessing.
         return im
 
     def run(self):
-        print("LOGINFO---%s---Thread %s begin running" % (self.getTimeFlag(),self.threadName))
-        print(self.threadStageDict)
+        print("LOGINFO---%s---Thread %s begin running" %(self.getTimeFlag(), self.threadName))
         # self.urlFlag=self.paramDict['urlFlag']
+        timeout_count = 0
         while True:
-            if self.threadStageDict['producer_Of_ImageNameQueue'] < 1 and self.imageNameQueue.qsize() <= 0 and self.imageNameQueue.empty():
-                break
-            else:
-                try:
-                    imagePath = self.imageNameQueue.get(block=True, timeout=120)
-                except:
-                    print("%s  get timeout" % (self.threadName))
-                    continue
+            try:
+                self.imageName_lock.acquire()
+                imagePath = self.imageNameQueue.get(block=True, timeout=60)
+            except:
+                self.imageName_lock.release()
+                print("%s : %s  get timeout" % (self.getTimeFlag(),self.threadName))
+                timeout_count += 1
+                if timeout_count >5:
+                    print("LOGINFO---%s---Thread exception,so kill %s" %
+                          (self.getTimeFlag(),self.threadName))
+                    break
                 else:
-                    imgData = self.readImage_fun(isUrlFlag=self.urlFlag, imagePath=imagePath)
-                    if np.shape(imgData) == () or len(np.shape(imgData)) != 3 or np.shape(imgData)[-1] != 3:
-                        print("WARNING---%s---imagePath %s can't read" %(self.getTimeFlag(), imagePath))
-                    else:
-                        self.imageDataQueue.put([imagePath, imgData])
-                        pass
-        self.threadStageDict['producer_Of_ImageDataQue_And_consumer_Of_imageNameQueue'] -= 1
-        print("LOGINFO---%s---Thread %s end" %
-              (self.getTimeFlag(), self.threadName))
+                    time.sleep(10)
+                    continue
+            else:
+                self.imageName_lock.release()
+                if imagePath == None:
+                    print("LOGINFO---%s---Thread %s Exiting" %(self.getTimeFlag(), self.threadName))
+                    break
+                imgData = self.readImage_fun(isUrlFlag=self.urlFlag, imagePath=imagePath)
+                if np.shape(imgData) == () or len(np.shape(imgData)) != 3 or np.shape(imgData)[-1] != 3:
+                    print("WARNING---%s---imagePath %s can't read" %(self.getTimeFlag(), imagePath))
+                else:
+                    self.imageData_lock.acquire()
+                    self.imageDataQueue.put([imagePath, imgData])
+                    self.imageData_lock.release()
+        self.imageData_lock.acquire()
+        self.imageDataQueue.put(None)
+        self.imageData_lock.release()
+        print("LOGINFO---%s---Thread %s end" %(self.getTimeFlag(), self.threadName))
     pass
 
 
 class Consumer_Of_ImageDataQueue_Inference(multiprocessing.Process):
-    def __init__(self, imageDataQueue, paramDictJsonStr, threadName, threadStageDict):
+    def __init__(self, imageDataQueue, imageData_lock,paramDictJsonStr, threadName):
         multiprocessing.Process.__init__(self)
         self.imageDataQueue = imageDataQueue
         self.paramDict = json.loads(paramDictJsonStr)
         self.threadName = threadName
-        self.threadStageDict = threadStageDict
+        self.imageData_lock = imageData_lock
         self.saveFileOp = None
         self.gpuId = None
         self.modelFileName = None
@@ -131,6 +152,7 @@ class Consumer_Of_ImageDataQueue_Inference(multiprocessing.Process):
 
     def getTimeFlag(self):
         return time.strftime("%Y:%m:%d:%H:%M:%S", time.localtime())
+
     def preInitial(self):
         self.saveFileOp = open(self.paramDict['saveResultFileName'], 'w')
         self.gpuId = int(self.paramDict['gpuId'])
@@ -184,26 +206,41 @@ class Consumer_Of_ImageDataQueue_Inference(multiprocessing.Process):
                          height=imgDataHeight, width=imgDataWidth)
 
     def run(self):
-        print("LOGINFO---%s---Thread %s begin running" % (self.getTimeFlag(),self.threadName))
-        print(self.threadStageDict)
+        print("LOGINFO---%s---Thread %s begin running" %
+              (self.getTimeFlag(), self.threadName))
         self.preInitial()
         self.initalNetModel()
+        endGetImageDataThreadCount = 0
+        time_out_count = 0
         while True:
-            # print("debug : %s   %s" % (str(self.imageDataQueue.qsize()),
-            #                            str(self.imageDataQueue.empty())))
-            if self.threadStageDict['producer_Of_ImageDataQue_And_consumer_Of_imageNameQueue'] < 1 and self.imageDataQueue.qsize() <= 0 and self.imageDataQueue.empty():
-                break
-            else:
-                try:
-                    imagePath, orginalImgData = self.imageDataQueue.get(
-                        block=True, timeout=120)
-                except :
-                    print("%s  get timeout" % (self.threadName))
-                    continue
+            try:
+                self.imageData_lock.acquire()
+                next_imageData = self.imageDataQueue.get(block=True, timeout=60)   
+            except :
+                self.imageData_lock.release()
+                print("%s  get timeout" % (self.threadName))
+                time_out_count += 1
+                if endGetImageDataThreadCount >= self.paramDict['imageDataProducerCount'] or time_out_count >8:
+                    print("LOGINFO---%s---Thread Exception so kill  %s " %
+                          (self.getTimeFlag(), self.threadName))
+                    break
                 else:
-                    self.inference_fun(orginalImgData=orginalImgData, imagePath=imagePath)
-        self.threadStageDict['consumer_inference'] -= 1
-        print("LOGINFO---%s---Thread %s end" % (self.getTimeFlag(), self.threadName))
+                    time.sleep(10)
+                    continue
+            else:
+                self.imageData_lock.release()
+                if next_imageData == None:
+                    endGetImageDataThreadCount += 1
+                    if endGetImageDataThreadCount >= self.paramDict['imageDataProducerCount']:
+                        print("LOGINFO---%s---Thread %s Exiting" %(self.getTimeFlag(), self.threadName))
+                        break
+                else:
+                    imagePath = next_imageData[0]
+                    orginalImgData = next_imageData[1]
+                    self.inference_fun(
+                        orginalImgData=orginalImgData, imagePath=imagePath)
+        print("LOGINFO---%s---Thread %s end" %
+              (self.getTimeFlag(), self.threadName))
     pass
 
 
@@ -237,43 +274,38 @@ def getFilePath_FileNameNotIncludePostfix(fileName=None):
 
 
 def mainProcessFun(param_dict_JsonStr=None):
-    countOfgetUrlDataThread = 5
-    manager = multiprocessing.Manager()
-    threadStageDict = manager.dict()
-    threadStageDict['producer_Of_ImageNameQueue'] = 1
-    threadStageDict['producer_Of_ImageDataQue_And_consumer_Of_imageNameQueue'] = countOfgetUrlDataThread
-    threadStageDict['consumer_inference'] = 1
+    param_dict = json.loads(param_dict_JsonStr)
+    countOfgetUrlDataThread = param_dict['imageDataProducerCount']
     print("main process begin running")
-    print(threadStageDict)
     imageNameQueue = multiprocessing.Queue()
+    imageName_lock = multiprocessing.Lock()
     imageDataQueue = multiprocessing.Queue()
+    imageData_lock = multiprocessing.Lock()
     producer_Of_ImageNameQueue = Producer_Of_ImageNameQueue(
-        imageNameQueue, param_dict_JsonStr, "producer_Of_ImageNameQueue-"+str(1), threadStageDict)
+        imageNameQueue, imageName_lock, param_dict_JsonStr, "producer_Of_ImageNameQueue-"+str(1))
     producer_Of_ImageNameQueue.daemon = True
     producer_Of_ImageNameQueue.start()
     time.sleep(10)
-    
     threadList = []
     for i in range(1, countOfgetUrlDataThread+1):
         threadName = "producer_Of_ImageDataQue_And_consumer_Of_imageNameQueue-" + str(i)
         produce_and_consumer = Producer_Of_ImageDataQueue_And_consumer_Of_imageNameQueue(
-            imageNameQueue, imageDataQueue, param_dict_JsonStr, threadName, threadStageDict)
+            imageNameQueue, imageName_lock, imageDataQueue, imageData_lock, param_dict_JsonStr, threadName)
         threadList.append(produce_and_consumer)
 
     consumer_inference = Consumer_Of_ImageDataQueue_Inference(
-        imageDataQueue, param_dict_JsonStr, "consumer_inference-"+str(1), threadStageDict)
+        imageDataQueue, imageData_lock,param_dict_JsonStr, "consumer_inference-"+str(1))
 
     for i_thread in threadList:
         i_thread.daemon = True
         i_thread.start()
     consumer_inference.start()
-    time.sleep(20)
+    time.sleep(10)
     producer_Of_ImageNameQueue.join()
     for i_thread in threadList:
         i_thread.join()
         # eval('produce_and_consumer-{}.join()'.format(i))
     consumer_inference.join()
-    print(threadStageDict)
     print("main process end")
     pass
 
@@ -296,6 +328,7 @@ def main():
         args.modelBasePath, args.labelFileName)
     param_dict['gpuId'] = int(args.gpu_id)
     param_dict['imagSize'] = 320  # the image size into the model
+    param_dict['imageDataProducerCount'] = 4  # one gpu, "urlProducerCount" get url data process
     # param_dict['urlFlag'] = True
     param_dict_JsonStr = json.dumps(param_dict)
     print(param_dict)

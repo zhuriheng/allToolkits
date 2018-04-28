@@ -159,10 +159,6 @@ class RefineDet_Model:
     pass
 
 
-class Rfcn_dcn_Model:
-    pass
-
-
 def merge_two_bbox_list(list_a,list_b):
     image_name = list_a.split('\t')[0]
     bbox_list_a = json.loads(list_a.split('\t')[1])
@@ -175,12 +171,13 @@ def merge_two_bbox_list(list_a,list_b):
     return "%s\t%s" % (image_name, json.dumps(final_list))
 
 
+color_dict = dict()
 def visualize_Fun(origim, bbox_list):
+    global color_dict
     im = origim
     color_black = (0, 0, 0)
     # color = (random.randint(0, 256), random.randint(
     #     0, 256), random.randint(0, 256))
-    color_dict = dict()
     for bbox_dict in bbox_list:
         bbox = bbox_dict['pts']
         cls_name = bbox_dict['class']
