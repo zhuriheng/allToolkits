@@ -23,6 +23,9 @@ helpInfoStr = \
             --vocpath ,required 
         4 : 统计vopath bbox 的类别信息
             --vocpath ,required 
+        5 : 抽样画图，抽样画 pascal voc 格式的数据
+            --vocpath ,required
+            会 将画的图 保存在 vocpath+'-draw' 目录下。
 """
 
 def parse_args():
@@ -96,6 +99,12 @@ def main():
             return -1
         labelx2xml_helper.statisticBboxInfo_Fun(vocPath=vocpath)
         pass
+    elif args.actionFlag == 5:
+        vocpath = args.vocpath
+        if vocpath == None:
+            print("vocpath is required")
+            return -1
+        labelx2xml_helper.drawImageWithBbosFun(vocPath=vocpath)
     pass
 
 if __name__ == '__main__':

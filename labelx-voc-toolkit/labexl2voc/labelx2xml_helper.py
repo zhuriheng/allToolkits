@@ -3,6 +3,8 @@ import os
 import sys
 import json
 import time
+import random
+from lxml import etree
 import  gen_imagesets
 import image_helper
 import xml_helper
@@ -164,4 +166,58 @@ def statisticBboxInfo_Fun(vocPath=None):
             f.write(line)
     pass
 
+
+def drawImageWithBbox(absoluteImagePath=None, absoluteXmlFilePath=None, savePath=None):
+    tree = etree.parse(absoluteXmlFilePath)
+    rooTElement = tree.getroot()
+    object_list = []
+    for child in rooTElement:
+        if child.tag == "filename":
+            if child.text != absoluteImagePath.split('/')[-1]:
+                print("%s != %s" % (child.text, absoluteImagePath))
+        elif child.tag == "object":
+            one_object_dict = {}
+            one_object_dict['name'] = child.xpath('name')[0].text
+            one_object_dict['xmin'] = child.xpath(
+                'bndbox')[0].xpath('xmin')[0].text
+            one_object_dict['ymin'] = child.xpath(
+                'bndbox')[0].xpath('ymin')[0].text
+            one_object_dict['xmax'] = child.xpath(
+                'bndbox')[0].xpath('xmax')[0].text
+            one_object_dict['ymax'] = child.xpath(
+                'bndbox')[0].xpath('ymax')[0].text
+            object_list.append(one_object_dict)
+            pass
+        pass
+    color_black = (0, 0, 0)
+    im = cv2.imread(absoluteImagePath)
+    for object in object_list:
+        color = (random.randint(0, 256), random.randint(
+            0, 256), random.randint(0, 256))
+        print(object)
+        cv2.rectangle(im, (int(object.get('xmin')), int(object.get('ymin'))), (int(
+            object.get('xmax')), int(object.get('ymax'))), color=color, thickness=1)
+        cv2.putText(im, '%s' % (object.get('name')), (int(object.get('xmin')), int(object.get(
+            'ymin')) + 10), color=color_black, fontFace=cv2.FONT_HERSHEY_COMPLEX, fontScale=0.5)
+    cv2.imwrite(savePath, im)
+    pass
+    pass
+
+def drawImageWithBbosFun(vocPath=None):
+    xmlFilePath = os.path.join(vocPath, 'Annotations')
+    imageFilePath = os.path.join(vocPath, 'JPEGImages')
+    drawImageSavePath = vocPath+'-draw'
+    if not os.path.exists(drawImageSavePath):
+        os.makedirs(drawImageSavePath)
+    xmlList = os.listdir(xmlFilePath) # get xml file
+    random_xml_list = random.sample(xmlList, len(xmlList)//1000)
+    for xml_name in random_xml_list:
+        xmlFile = os.path.join(xmlFilePath, xml_name)
+        imageFile = os.path.join(imageFilePath, xml_name[:xml_name.rfind('.')+'jpg'])
+        saveImageFile = os.path.join(drawImageSavePath, imageFile)
+        drawImageWithBbox(absoluteImagePath=imageFile,
+                          absoluteXmlFilePath=xmlFile, savePath=saveImageFile)
+        pass
+    pass
+    pass
 
