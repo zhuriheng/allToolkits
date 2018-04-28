@@ -217,7 +217,8 @@ def drawImageWithBbosFun(vocPath=None):
     for xml_name in random_xml_list:
         xmlFile = os.path.join(xmlFilePath, xml_name)
         imageFile = os.path.join(imageFilePath, xml_name[:xml_name.rfind('.')]+'.jpg')
-        saveImageFile = os.path.join(drawImageSavePath, imageFile)
+        saveImageFile = os.path.join(
+            drawImageSavePath, xml_name[:xml_name.rfind('.')]+'.jpg')
         drawImageWithBbox(absoluteImagePath=imageFile,
                           absoluteXmlFilePath=xmlFile, savePath=saveImageFile)
         pass
