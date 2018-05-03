@@ -100,7 +100,7 @@ class Producer_Of_ImageDataQueue_And_consumer_Of_imageNameQueue(multiprocessing.
     def run(self):
         print("LOGINFO---%s---Thread %s begin running" %(self.getTimeFlag(), self.threadName))
         # self.urlFlag=self.paramDict['urlFlag']
-        timeout_count = 0
+        # timeout_count = 0
         while True:
             try:
                 self.imageName_lock.acquire()
@@ -108,14 +108,15 @@ class Producer_Of_ImageDataQueue_And_consumer_Of_imageNameQueue(multiprocessing.
             except:
                 self.imageName_lock.release()
                 print("%s : %s  get timeout" % (self.getTimeFlag(),self.threadName))
-                timeout_count += 1
-                if timeout_count >5:
-                    print("LOGINFO---%s---Thread exception,so kill %s" %
-                          (self.getTimeFlag(),self.threadName))
-                    break
-                else:
-                    time.sleep(10)
-                    continue
+                time.sleep(3)
+                # timeout_count += 1
+                # if timeout_count >5:
+                #     print("LOGINFO---%s---Thread exception,so kill %s" %
+                #           (self.getTimeFlag(),self.threadName))
+                #     break
+                # else:
+                #     time.sleep(10)
+                #     continue
             else:
                 self.imageName_lock.release()
                 if imagePath == None:
@@ -211,7 +212,7 @@ class Consumer_Of_ImageDataQueue_Inference(multiprocessing.Process):
         self.preInitial()
         self.initalNetModel()
         endGetImageDataThreadCount = 0
-        time_out_count = 0
+        # time_out_count = 0
         while True:
             try:
                 self.imageData_lock.acquire()
@@ -219,14 +220,15 @@ class Consumer_Of_ImageDataQueue_Inference(multiprocessing.Process):
             except :
                 self.imageData_lock.release()
                 print("%s  get timeout" % (self.threadName))
-                time_out_count += 1
-                if endGetImageDataThreadCount >= self.paramDict['imageDataProducerCount'] or time_out_count >8:
-                    print("LOGINFO---%s---Thread Exception so kill  %s " %
-                          (self.getTimeFlag(), self.threadName))
-                    break
-                else:
-                    time.sleep(10)
-                    continue
+                time.sleep(3)
+                # time_out_count += 1
+                # if endGetImageDataThreadCount >= self.paramDict['imageDataProducerCount'] or time_out_count >8:
+                #     print("LOGINFO---%s---Thread Exception so kill  %s " %
+                #           (self.getTimeFlag(), self.threadName))
+                #     break
+                # else:
+                #     time.sleep(10)
+                #     continue
             else:
                 self.imageData_lock.release()
                 if next_imageData == None:

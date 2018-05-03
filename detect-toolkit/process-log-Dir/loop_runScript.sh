@@ -40,28 +40,49 @@ done
 check()
 {
     count=`ps auxww | grep $1 | grep -v grep |grep -v defunct |wc -l`
-    #echo $count
-    if [ $count -eq 0 ]; then
-    	#statements
-    	return 0
-    fi
-    return 1
+    return $count
+	#echo $count
+    # if [ $count -eq 0 ]; then
+    # 	#statements
+    # 	return 0
+    # fi
+    # return 1
+}
+check_Sl()
+{
+    count=`ps auxww | grep $1 | grep -v grep |grep -v defunct |awk '$8=="Sl"{print}'|wc -l`
+    return $count
+	#echo $count
+    # if [ $count -eq 0 ]; then
+    # 	#statements
+    # 	return 0
+    # fi
+    # return 1
 }
 jobFlag=0
+checkFlag=0
 while [ $jobFlag -lt $N ]; do
 	check mp_refindeDet-res18-inference-demo.py
-	if [ $? -eq 0 ]; then
-		#statements
+	a=$?
+	check_Sl mp_refindeDet-res18-inference-demo.py
+	b=$?
+	if [ $a -eq 0 ]; then
 		date
 		job_id=`printf "%.4d" $jobFlag`
 		echo "no job running, so run ---"$job_id"--- and sleep 100s"
-		# cmdStr="bash "$bash_dir"/run.sh  "$inputBasePath"/job-"$jobFlag"/"$splitFilePrefix$jobFlag
-		# $runCmd
 		cd $bash_dir
-		./run.sh  $inputBasePath"/job-"$job_id"/"$splitFilePrefix$job_id
+		./processInference.sh  $inputBasePath"/job-"$job_id"/"$splitFilePrefix$job_id
 		echo "nohup runing the ---"$job_id"--- and begin sleep 100s"
 		jobFlag=$[jobFlag+1]
 		sleep 100
+	elif [ $a -eq $b ];then
+		checkFlag=$[checkFlag+1]
+		if [ $checkFlag -gt 5 ];then
+			pkill -9 python
+			checkFlag=0
+		else
+			sleep 60
+		fi
 	else
 		date
 		nowRunJobFlag=$[jobFlag-1]

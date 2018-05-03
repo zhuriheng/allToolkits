@@ -5,7 +5,6 @@ change log :
     18-03-12:
         add configYamlFile param
 """
-from __future__ import print_function
 import _init_paths
 import argparse
 import os
@@ -16,14 +15,6 @@ import cv2
 from config.config import config, update_config
 from utils.image import resize, transform
 import numpy as np
-# get config
-# os.environ['PYTHONUNBUFFERED'] = '1'
-# os.environ['MXNET_CUDNN_AUTOTUNE_DEFAULT'] = '0'
-# os.environ['MXNET_ENABLE_GPU_P2P'] = '0'
-# cur_path = os.path.abspath(os.path.dirname(__file__))
-# cur_path = cur_path[:cur_path.rfind('/')]
-# print(cur_path)
-#sys.path.insert(0, os.path.join(cur_path, 'external/mxnet', config.MXNET_VERSION))
 import mxnet as mx
 from core.tester import im_detect, Predictor
 from symbols import *
@@ -35,38 +26,24 @@ import random
 import urllib
 import json
 import copy
-# define one batch process how many image
-ONE_BATCH_IMAGE_COUNT = 200
-
+import rfcn_dcn_config
 
 def parse_args():
     parser = argparse.ArgumentParser(description='rfcn-dcn-inference demo',
                                      formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     parser.add_argument(
-        '--configYamlFile', required=True, help='configYamlFile', default=None, type=str)
-    parser.add_argument(
-        '--epoch', required=True, help='epoch', default=None, type=int)
-    parser.add_argument(
         '--localImageListFile', help='local images  list file', default=None, type=str)
     parser.add_argument(
-        '--localImageBasePath', help='local images base path', default=None, type=str)
-    parser.add_argument(
         '--urlImageListFile', help='input images url list file', default=None, type=str)
-    parser.add_argument(
-        '--outputFilePath', dest='outputFilePath', help='the file path ,save detect result', type=str)
-    parser.add_argument('--gpuId', required=True,
-                        dest='gpuId', help='the id of gpu', type=str)
+    parser.add_argument('--gpuId', required=True,dest='gpuId', help='the id of gpu', type=str)
     # outputFileFlag : 1 是回归测试文件，2 是 labex 格式的输出文件
     parser.add_argument('--outputFileFlag', required=True,
                         help='out put file flag', type=int)
+    # 0 no visualize  , 1 visualize
     parser.add_argument(
-        '--visualize', help='visualize the detect reuslt', type=bool, default=False)
-    parser.add_argument('--visualizeOutPutPath',
-                        help='visualizeOutPutPath', type=str)
-    parser.add_argument('--beginProcessLineNum',
-                        help='beginProcessLineNum', type=int, default=0)
-    # parser.add_argument('--threshold',
-    #                     help='threshold', type=float, default=0.7)
+        '--visualizeFlag', help='visualize the detect reuslt', type=int, default=False)
+    parser.add_argument('--beginLineNum',
+                        help='beginLineNum', type=int, default=0)
     args = parser.parse_args()
     return args
 
@@ -365,14 +342,5 @@ if __name__ == '__main__':
 
 
 """
-python rfcn-dcn-inference-labelx-or-regressionTest.py \
---configYamlFile ../experiments/rfcn/cfgs/resnet_v1_101_terror_dcn_rfcn_end2end_ohem.yaml \
---epoch 14 \
---localImageListFile  /workspace/data/BK/terror-dataSet-Dir/TERROR-DETECT-V1.0/ImageSets/Main/test.txt \
---localImageBasePath  /workspace/data/BK/terror-dataSet-Dir/TERROR-DETECT-V1.0/JPEGImages \
---outputFileFlag 1 \
---outputFilePath   /workspace/data/BK/rfcn-dcn-res101-terror-v1.0/Deformable-ConvNets/test_output_dir/v1.0-rg.result \
---gpuId 0 \
---visualize True \
---visualizeOutPutPath /workspace/data/BK/rfcn-dcn-res101-terror-v1.0/Deformable-ConvNets/test_output_dir/AnnoImages
+
 """
