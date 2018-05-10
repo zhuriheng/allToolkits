@@ -13,7 +13,7 @@ scriptFile="/workspace/data/master/bk_cls_inference/senet_cls_inference.py" # fo
 inputFile=$1
 splitFilePrefix="split_file-"
 # gpu id  used to run
-gpuArray=(0 1)
+gpuArray=(0 1 2 3)
 gpuNum=${#gpuArray[@]} 
 # inputfile 
 inputBasePath=`dirname $inputFile`
