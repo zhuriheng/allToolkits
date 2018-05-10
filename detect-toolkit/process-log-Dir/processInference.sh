@@ -1,4 +1,5 @@
 #!/bin/bash
+
 # set -x
 if [ ! -n "$1" ]
 then
@@ -7,14 +8,14 @@ then
 else
     echo "the input file is : "$1
 fi
-scriptFile="/workspace/data/BK/terror-detect-Dir/refineDet-res18/src/mp_refindeDet-res18-inference-demo.py"
+scriptFile="/workspace/data/master/bk_cls_inference/senet_cls_inference.py" # for k8s
+# scriptFile="/workspace/run/master/bk_cls_inference/senet_cls_inference.py" # for ava
 inputFile=$1
 splitFilePrefix="split_file-"
 # gpu id  used to run
-gpuArray=(0 1 2 3 4 5 6 7)
-#gpuArray=(5 6 7)
-gpuNum=${#gpuArray[@]}
-# inputfile
+gpuArray=(0 1)
+gpuNum=${#gpuArray[@]} 
+# inputfile 
 inputBasePath=`dirname $inputFile`
 inputFileName=`basename $inputFile`
 # split the input file by gpuNum
@@ -23,10 +24,10 @@ perFileLineCount=`expr $inputFileLineCount / $gpuNum`
 perFileLineCount_flag=`expr $inputFileLineCount % $gpuNum`
 if [ $perFileLineCount_flag -ne 0 ]
 then
-    perFileLineCount=`expr $perFileLineCount + 1`
+    perFileLineCount=`expr $perFileLineCount + 1` 
 fi
 echo "perFileLineCount : "$perFileLineCount
-# split
+# split 
 split_output_prefix=$inputBasePath"/"$splitFilePrefix
 split -l $perFileLineCount $inputFile -d -a 2 $split_output_prefix
 # get split result file
@@ -34,7 +35,7 @@ splitFileArray=()
 tempFileList=`ls $inputBasePath`
 for file in $tempFileList
 do
-    if [[ $file == $splitFilePrefix* ]]
+    if [[ $file == $splitFilePrefix* ]] 
     then
         if [[ $file == *"result.json" ]] || [[ $file == *"run.log" ]] || [[ $file == *"stderr.log" ]]
         then
@@ -42,11 +43,11 @@ do
         else
             tempFile=$inputBasePath"/"$file
             splitFileArray=(${splitFileArray[*]} $tempFile)
-        fi
+        fi 
     fi
 done
 
-# check
+# check 
 if [ $gpuNum -ne ${#splitFileArray[@]} ]
 then
     echo "ERROR : log file count unequal gpu count"
@@ -54,12 +55,14 @@ then
 fi
 
 
-modelBasePath="/workspace/data/BK/terror-detect-Dir/refineDet-res18/models"
-modelName="terror-res18-320x320-t2_iter_130000.caffemodel"
+
+# modelBasePath="/workspace/run/master/bk_cls_inference/models" # for ava
+modelBasePath="/workspace/data/master/bk_cls_inference/models" # for k8s
+modelName="se-res50-hiv-v0.3-t2_iter_24000.caffemodel"
 deployName="deploy.prototxt"
-labelName="labelmap_bk.prototxt"
-for(( i=0;i<$gpuNum;i++))
-do
+labelName="labels.lst"
+for(( i=0;i<$gpuNum;i++)) 
+do 
     echo "gpu id is : "${gpuArray[i]}
     echo "log file is : "${splitFileArray[i]}
     runCmd="nohup python -u "$scriptFile" \
