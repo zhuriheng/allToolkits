@@ -1,5 +1,5 @@
 #!/bin/bash
-
+# test ln and git
 # set -x
 if [ ! -n "$1" ]
 then
